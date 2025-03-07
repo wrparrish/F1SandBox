@@ -45,7 +45,7 @@ fun AppNavigationHost(paddingValues: PaddingValues, navController: NavHostContro
     ) {
         homeGraph()
         settingsGraph()
-        driversGraph()
+        driversGraph(rootNavController = navController)
     }
 
 }

@@ -56,12 +56,19 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
 
+    implementation(libs.retrofit)
+    implementation(libs.converter.moshi)
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+
     implementation(libs.hilt.android)
     implementation(project(":core:ui"))
     implementation(project(":core:navigation"))
     implementation(project(":features:home"))
     implementation(project(":features:settings"))
     implementation(project(":features:drivers"))
+    implementation(project(":core:data"))
+    implementation(project(":core:network"))
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
