@@ -40,6 +40,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                     navController.navigate(item.route) {
                         popUpTo(Routes.HOME_SCREEN) {
                             saveState = true
+                            inclusive = true
                         }
                         launchSingleTop = true
                         restoreState = true

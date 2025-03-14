@@ -30,15 +30,18 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.parrishdev.model.Driver
+import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.ui.common.DriverHeadshot
 
 
 @Composable
-fun DriversScreen(rootNavController: NavController,viewModel: DriversViewModel = hiltViewModel()) {
+fun DriversScreen(
+    rootNavController: NavController,
+    viewModel: DriversViewModel = hiltViewModel()
+) {
     val state = viewModel.uiState.collectAsState()
 
     when {
@@ -100,16 +103,16 @@ fun DriverCard(driver: Driver, modifier: Modifier = Modifier) {
         modifier = modifier
     ) {
         Row {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = driver.fullName ?: "bad data, check logs")
-                Text(text = driver.teamName ?: "bad data, check logs")
-            }
-
             DriverHeadshot(
                 driver, modifier = Modifier
                     .align(Alignment.Bottom)
                     .height(120.dp)
             )
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = driver.fullName ?: "bad data, check logs")
+                Text(text = driver.teamName ?: "bad data, check logs")
+            }
 
             Box(modifier = Modifier.fillMaxWidth()) {
 
@@ -161,15 +164,27 @@ fun DriverEntryPreview() {
 }
 
 
-fun NavGraphBuilder.driversGraph(rootNavController: NavController) {
+fun NavGraphBuilder.driversGraph(
+    rootNavController: NavController,
+    sharedViewModel: SharedViewModel
+) {
     navigation(startDestination = Routes.Drivers.SCREEN, route = Routes.Drivers.GRAPH) {
-        composable(route = Routes.Drivers.SCREEN) { DriversScreen(rootNavController) }
+        composable(route = Routes.Drivers.SCREEN) {
+            sharedViewModel.updateTitle("Drivers")
+            DriversScreen(
+                rootNavController
+            )
+        }
         composable(
             route = Routes.DriverDetails.SCREEN,
             arguments = listOf(navArgument(Routes.DriverDetails.ARG_DRIVER_ID) {
                 type = NavType.StringType
-            })) {
-            Log.e("DriverDetailsScreen", "DriverDetailsScreen: ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}")
+            })
+        ) {
+            Log.e(
+                "DriverDetailsScreen",
+                "DriverDetailsScreen: ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}"
+            )
             Text("Driver Details Screen for ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}")
         }
     }
