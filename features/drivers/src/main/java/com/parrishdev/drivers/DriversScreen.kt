@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +34,8 @@ import androidx.navigation.navigation
 import com.parrishdev.model.Driver
 import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.ui.common.DriverHeadshot
+import com.parrishdev.ui.common.Error
+import com.parrishdev.ui.common.Loading
 
 
 @Composable
@@ -128,20 +129,7 @@ fun DriverCard(driver: Driver, modifier: Modifier = Modifier) {
 }
 
 
-@Composable
-fun Loading(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
 
-@Composable
-fun Error(errorMessage: String) {
-    Text(errorMessage)
-}
 
 @Preview(showBackground = true)
 @Composable

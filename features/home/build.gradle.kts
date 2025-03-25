@@ -51,6 +51,8 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(project(":core:navigation"))
+    implementation(project(":core:data"))
+    implementation(project(":core:model"))
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)

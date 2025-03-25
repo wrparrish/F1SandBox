@@ -2,6 +2,8 @@ package com.parrishdev.f1sandbox.di
 
 import com.parrishdev.data.F1DriversApi
 import com.parrishdev.data.F1DriversApiImpl
+import com.parrishdev.data.MeetingsApi
+import com.parrishdev.data.MeetingsApiImpl
 import com.parrishdev.network.F1Endpoint
 import com.squareup.moshi.Moshi
 import dagger.Binds
@@ -23,6 +25,9 @@ import javax.inject.Singleton
 abstract class DataModule {
     @Binds
     abstract fun bindF1DriversApi(impl: F1DriversApiImpl): F1DriversApi
+
+    @Binds
+    abstract fun bindMeetingsApi(impl: MeetingsApiImpl): MeetingsApi
 }
 
 

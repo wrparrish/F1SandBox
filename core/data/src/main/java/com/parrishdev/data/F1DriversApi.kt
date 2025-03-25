@@ -1,6 +1,7 @@
 package com.parrishdev.data
 
 import com.parrishdev.model.Driver
+import com.parrishdev.model.Meeting
 import com.parrishdev.network.F1Endpoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,6 +9,7 @@ import javax.inject.Inject
 
 interface F1DriversApi {
     suspend fun fetchDrivers(): Result<List<Driver>>
+
 }
 
 
