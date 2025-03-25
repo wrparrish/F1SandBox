@@ -16,7 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 
 sealed class BottomNavItem(val route: String, val title: String, val icon: ImageVector) {
-    data object Home : BottomNavItem(Routes.HOME_GRAPH, "Home", Icons.Filled.Home)
+    data object Home : BottomNavItem(Routes.Home.GRAPH, "Home", Icons.Filled.Home)
     data object Drivers : BottomNavItem(Routes.Drivers.GRAPH, "Drivers", Icons.Filled.Person)
     data object Settings : BottomNavItem(Routes.Settings.GRAPH, "Settings", Icons.Filled.Settings)
 }
@@ -38,7 +38,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 selected = currentRoute == item.route,
                 onClick = {
                     navController.navigate(item.route) {
-                        popUpTo(Routes.HOME_SCREEN) {
+                        popUpTo(Routes.Home.SCREEN) {
                             saveState = true
                             inclusive = true
                         }

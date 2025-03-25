@@ -1,6 +1,7 @@
 package com.parrishdev.home
 
 import Routes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,15 +13,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
 import com.parrishdev.model.Meeting
 import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.ui.common.Error
@@ -28,10 +33,21 @@ import com.parrishdev.ui.common.Loading
 
 @Composable
 fun HomeScreen(
+    rootNavController: NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state = viewModel.viewState.collectAsState().value
     val meetings = state.meetings
+
+    LaunchedEffect(key1 = true) {
+        viewModel.viewEffects.collect {
+            when (it) {
+                is HomeEffect.GoToMeeting -> {
+                    rootNavController.navigate(Routes.MeetingDetails.createRoute(it.meetingId))
+                }
+            }
+        }
+    }
 
     when {
         state.isLoading -> {
@@ -43,14 +59,15 @@ fun HomeScreen(
                 errorMessage = state.errorMessage
             )
         }
+
+        else -> {
+            MeetingList(viewModel, meetings)
+        }
     }
-
-    MeetingList(meetings)
-
 }
 
 @Composable
-fun MeetingList(meetings: List<Meeting>) {
+fun MeetingList(viewModel: HomeViewModel, meetings: List<Meeting>) {
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = Modifier
@@ -58,17 +75,20 @@ fun MeetingList(meetings: List<Meeting>) {
         state = listState
     ) {
         items(meetings) { meeting ->
-            MeetingCard(meeting)
+            MeetingCard(viewModel, meeting)
         }
     }
 }
 
 @Composable
-fun MeetingCard(meeting: Meeting, modifier: Modifier = Modifier) {
+fun MeetingCard(viewModel: HomeViewModel, meeting: Meeting, modifier: Modifier = Modifier) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable {
+                viewModel.onMeetingSelected(meeting.meetingKey)
+            },
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -82,11 +102,24 @@ fun MeetingCard(meeting: Meeting, modifier: Modifier = Modifier) {
 }
 
 
-fun NavGraphBuilder.homeGraph(sharedViewModel: SharedViewModel) {
-    navigation(startDestination = Routes.HOME_SCREEN, route = Routes.HOME_GRAPH) {
-        composable(Routes.HOME_SCREEN) {
+fun NavGraphBuilder.homeGraph(
+    rootNavController: NavController,
+    sharedViewModel: SharedViewModel
+) {
+    navigation(startDestination = Routes.Home.SCREEN, route = Routes.Home.GRAPH) {
+        composable(Routes.Home.SCREEN) {
             sharedViewModel.updateTitle(LocalContext.current.getString(R.string.home_screen))
-            HomeScreen()
+            HomeScreen(rootNavController)
         }
     }
+
+    composable(
+        route = Routes.MeetingDetails.SCREEN,
+        arguments = listOf(navArgument(Routes.MeetingDetails.ARG_MEETING_ID) {
+            type = NavType.StringType
+        })
+    ) {
+        Text("Meeting Details Screen for ${it.arguments?.getString(Routes.MeetingDetails.ARG_MEETING_ID)}")
+    }
+
 }

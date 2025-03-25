@@ -1,7 +1,17 @@
 
 object Routes {
-    const val HOME_GRAPH = "home_graph"
-    const val HOME_SCREEN = "home_screen"
+    object Home {
+        const val GRAPH = "home_graph"
+        const val SCREEN = "home_screen"
+    }
+
+    object MeetingDetails {
+        const val SCREEN = "meeting_screen/{meetingId}"
+        const val ARG_MEETING_ID = "meetingId"
+        fun createRoute(meetingId: Int): String {
+            return "meeting_screen/$meetingId"
+        }
+    }
 
     object Drivers {
         const val GRAPH = "drivers_graph"

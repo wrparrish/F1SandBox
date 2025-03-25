@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parrishdev.data.MeetingsApi
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,6 +16,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewModel() {
     private val _viewState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState())
     val viewState: StateFlow<HomeViewState> = _viewState.asStateFlow()
+
+    private val _viewEffects: MutableSharedFlow<HomeEffect> = MutableSharedFlow()
+    val viewEffects: SharedFlow<HomeEffect> = _viewEffects
 
     init {
         fetchMeetings()
@@ -44,5 +49,11 @@ class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewMode
             }
         }
 
+    }
+
+    fun onMeetingSelected(meetingKey: Int) {
+        viewModelScope.launch {
+            _viewEffects.emit(HomeEffect.GoToMeeting(meetingKey))
+        }
     }
 }

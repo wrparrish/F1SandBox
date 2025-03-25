@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                         TopAppBar(
                             title = {
                                 Text(currentTitle.value)
-                                    },
+                            },
                             navigationIcon = {
                                 IconButton(onClick = {
                                     navController.navigateUp()
@@ -71,13 +71,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigationHost(paddingValues: PaddingValues, navController: NavHostController, sharedViewModel: SharedViewModel) {
+fun AppNavigationHost(
+    paddingValues: PaddingValues,
+    navController: NavHostController,
+    sharedViewModel: SharedViewModel
+) {
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME_GRAPH,
+        startDestination = Routes.Home.GRAPH,
         modifier = Modifier.padding(paddingValues)
     ) {
-        homeGraph(sharedViewModel)
+        homeGraph(rootNavController = navController, sharedViewModel)
         settingsGraph(sharedViewModel)
         driversGraph(rootNavController = navController, sharedViewModel = sharedViewModel)
     }

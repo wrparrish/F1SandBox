@@ -169,10 +169,6 @@ fun NavGraphBuilder.driversGraph(
                 type = NavType.StringType
             })
         ) {
-            Log.e(
-                "DriverDetailsScreen",
-                "DriverDetailsScreen: ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}"
-            )
             Text("Driver Details Screen for ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}")
         }
     }

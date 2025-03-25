@@ -7,3 +7,9 @@ data class HomeViewState(
     val errorMessage: String? = null,
     val meetings: List<Meeting> = emptyList()
 )
+
+sealed class HomeEffect {
+    class GoToMeeting(val meetingId: Int) : HomeEffect()
+}
+
+
