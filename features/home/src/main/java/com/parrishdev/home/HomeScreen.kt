@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -37,6 +38,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state = viewModel.viewState.collectAsState().value
+    val events = state.events
     val meetings = state.meetings
 
     LaunchedEffect(key1 = true) {
@@ -61,13 +63,13 @@ fun HomeScreen(
         }
 
         else -> {
-            MeetingList(viewModel, meetings)
+            MeetingList(events, meetings)
         }
     }
 }
 
 @Composable
-fun MeetingList(viewModel: HomeViewModel, meetings: List<Meeting>) {
+fun MeetingList(events: (HomeEvent) -> Unit, meetings: List<Meeting>) {
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = Modifier
@@ -75,19 +77,19 @@ fun MeetingList(viewModel: HomeViewModel, meetings: List<Meeting>) {
         state = listState
     ) {
         items(meetings) { meeting ->
-            MeetingCard(viewModel, meeting)
+            MeetingCard(events, meeting)
         }
     }
 }
 
 @Composable
-fun MeetingCard(viewModel: HomeViewModel, meeting: Meeting, modifier: Modifier = Modifier) {
+fun MeetingCard(events: (HomeEvent) -> Unit, meeting: Meeting, modifier: Modifier = Modifier) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
             .padding(16.dp)
             .clickable {
-                viewModel.onMeetingSelected(meeting.meetingKey)
+                events(HomeEvent.MeetingSelected(meeting.meetingKey))
             },
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -95,7 +97,7 @@ fun MeetingCard(viewModel: HomeViewModel, meeting: Meeting, modifier: Modifier =
                 text = meeting.meetingName,
                 modifier = Modifier
                     .padding(16.dp)
-                    .align(Alignment.TopEnd)
+                    .align(Alignment.Center)
             )
         }
     }
@@ -122,4 +124,20 @@ fun NavGraphBuilder.homeGraph(
         Text("Meeting Details Screen for ${it.arguments?.getString(Routes.MeetingDetails.ARG_MEETING_ID)}")
     }
 
+}
+
+@Composable
+@Preview
+fun MeetingCardPreview() {
+    val meeting = Meeting(
+        meetingOfficialName = "The jackwagon grand prix"
+    )
+    MeetingCard({}, meeting)
+
+}
+
+@Composable
+@Preview
+fun HomeScreenPreview() {
+    HomeScreen(NavController(LocalContext.current))
 }

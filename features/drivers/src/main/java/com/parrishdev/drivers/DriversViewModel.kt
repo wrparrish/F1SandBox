@@ -14,7 +14,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DriversViewModel @Inject constructor(private val f1DriversApi: F1DriversApi) : ViewModel() {
-    private val _uiState = MutableStateFlow(DriversViewState())
+    private val _uiState = MutableStateFlow(DriversViewState(
+        events =  {
+            when (it) {
+                is DriversEvent.DriverSelected -> onDriverSelected(it.driverId)
+            }
+        }
+    ))
     val uiState = _uiState.asStateFlow()
 
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
@@ -50,9 +56,9 @@ class DriversViewModel @Inject constructor(private val f1DriversApi: F1DriversAp
         }
     }
 
-    fun onDriverSelected(driver: Driver) {
+    fun onDriverSelected(driverId: String) {
         viewModelScope.launch {
-            _navigationEvents.emit(NavigationEvent.NavigateToDetails(driver.driverNumber.toString()))
+            _navigationEvents.emit(NavigationEvent.NavigateToDetails(driverId))
         }
     }
 }

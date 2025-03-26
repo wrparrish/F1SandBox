@@ -14,7 +14,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewModel() {
-    private val _viewState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState())
+    private val _viewState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState(
+        events = {
+            when (it) {
+                is HomeEvent.MeetingSelected -> onMeetingSelected(it.meetingId)
+            }
+        }
+    ))
     val viewState: StateFlow<HomeViewState> = _viewState.asStateFlow()
 
     private val _viewEffects: MutableSharedFlow<HomeEffect> = MutableSharedFlow()
@@ -51,7 +57,7 @@ class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewMode
 
     }
 
-    fun onMeetingSelected(meetingKey: Int) {
+   private fun onMeetingSelected(meetingKey: Int) {
         viewModelScope.launch {
             _viewEffects.emit(HomeEffect.GoToMeeting(meetingKey))
         }

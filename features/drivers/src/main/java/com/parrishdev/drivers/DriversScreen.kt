@@ -1,7 +1,6 @@
 package com.parrishdev.drivers
 
 import Routes
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -90,7 +89,7 @@ fun DriversList(viewModel: DriversViewModel, drivers: List<Driver>, modifier: Mo
                     .height(160.dp)
                     .padding(16.dp)
                     .clickable {
-                        viewModel.onDriverSelected(driver)
+                        viewModel.onDriverSelected(driver.driverNumber.toString())
                     }
             )
         }
@@ -127,8 +126,6 @@ fun DriverCard(driver: Driver, modifier: Modifier = Modifier) {
         }
     }
 }
-
-
 
 
 @Preview(showBackground = true)
