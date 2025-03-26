@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewModel() {
+class HomeViewModel @Inject constructor(private val meetingsApi: MeetingsApi) : ViewModel() {
     private val _viewState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState(
         events = {
             when (it) {
@@ -27,9 +27,35 @@ class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewMode
     val viewEffects: SharedFlow<HomeEffect> = _viewEffects
 
     init {
-        fetchMeetings()
+        fetchRaceResults()
     }
 
+    private fun fetchRaceResults() {
+        viewModelScope.launch {
+            val wrappedResult = runCatching {
+                meetingsApi.fetchRaceResults()
+            }.onSuccess {
+                _viewState.value = viewState.value.copy(
+                    isLoading = false,
+                    results = it.getOrThrow().data.raceTable.races.orEmpty()
+                )
+            }.onFailure {
+                _viewState.value = viewState.value.copy(
+                    isLoading = false,
+                    errorMessage = it.message.orEmpty()
+                )
+            }
+
+            if (wrappedResult.isFailure) {
+                _viewState.value = viewState.value.copy(
+                    isLoading = false,
+                    errorMessage = wrappedResult.exceptionOrNull()?.message.orEmpty()
+                )
+            }
+        }
+    }
+
+/*
     private fun fetchMeetings() {
         viewModelScope.launch {
             val wrappedResult = runCatching {
@@ -56,8 +82,9 @@ class HomeViewModel @Inject constructor(val meetingsApi: MeetingsApi) : ViewMode
         }
 
     }
+*/
 
-   private fun onMeetingSelected(meetingKey: Int) {
+    private fun onMeetingSelected(meetingKey: Int) {
         viewModelScope.launch {
             _viewEffects.emit(HomeEffect.GoToMeeting(meetingKey))
         }

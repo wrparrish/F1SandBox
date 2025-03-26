@@ -4,6 +4,7 @@ import com.parrishdev.data.F1DriversApi
 import com.parrishdev.data.F1DriversApiImpl
 import com.parrishdev.data.MeetingsApi
 import com.parrishdev.data.MeetingsApiImpl
+import com.parrishdev.network.ErgastEndpoint
 import com.parrishdev.network.F1Endpoint
 import com.squareup.moshi.Moshi
 import dagger.Binds
@@ -17,6 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import javax.inject.Named
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -28,6 +30,21 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindMeetingsApi(impl: MeetingsApiImpl): MeetingsApi
+
+
+    companion object {
+        @Provides
+        @Singleton
+        fun provideF1DriversApiImpl(f1Endpoint: F1Endpoint): F1DriversApiImpl {
+            return F1DriversApiImpl(f1Endpoint)
+        }
+
+        @Provides
+        @Singleton
+        fun provideMeetingsApiImpl(ergastEndpoint: ErgastEndpoint): MeetingsApiImpl {
+            return MeetingsApiImpl(ergastEndpoint)
+        }
+    }
 }
 
 
@@ -35,6 +52,7 @@ abstract class DataModule {
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
     private const val BASE_URL = "https://api.openf1.org/v1/"
+    private const val ERGAST_BASE_URL = "https://api.jolpi.ca/ergast/f1/"
 
     @Provides
     @Singleton
@@ -58,6 +76,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("OpenF1")
     fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -68,8 +87,25 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideF1Endpoint(retrofit: Retrofit): F1Endpoint {
+    fun provideF1Endpoint(@Named("OpenF1") retrofit: Retrofit): F1Endpoint {
         return retrofit.create(F1Endpoint::class.java)
+    }
+
+    @Provides
+    @Singleton
+    @Named("Ergast")
+    fun provideErgastRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(ERGAST_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideErgastEndpoint(@Named("Ergast") retrofit: Retrofit): ErgastEndpoint {
+        return retrofit.create(ErgastEndpoint::class.java)
     }
 }
 

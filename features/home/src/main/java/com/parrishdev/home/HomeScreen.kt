@@ -28,15 +28,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.parrishdev.model.Meeting
+import com.parrishdev.model.RacesItem
+import com.parrishdev.model.TestFactory
 import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
 
 @Composable
 fun HomeScreen(
-    rootNavController: NavController,
-    viewModel: HomeViewModel = hiltViewModel()
+    rootNavController: NavController
 ) {
+    val viewModel: HomeViewModel = hiltViewModel()
     val state = viewModel.viewState.collectAsState().value
     val events = state.events
     val meetings = state.meetings
@@ -63,7 +65,8 @@ fun HomeScreen(
         }
 
         else -> {
-            MeetingList(events, meetings)
+            // MeetingList(events, meetings)
+            RaceResultList(events, state.results)
         }
     }
 }
@@ -78,6 +81,41 @@ fun MeetingList(events: (HomeEvent) -> Unit, meetings: List<Meeting>) {
     ) {
         items(meetings) { meeting ->
             MeetingCard(events, meeting)
+        }
+    }
+}
+
+@Composable
+fun RaceResultList(events: (HomeEvent) -> Unit, races: List<RacesItem>) {
+    val listState = rememberLazyListState()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        state = listState
+    ) {
+        items(races) { race ->
+            RaceResultCard(events, race)
+        }
+    }
+}
+
+@Composable
+fun RaceResultCard(events: (HomeEvent) -> Unit, race: RacesItem) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .clickable {
+                events(HomeEvent.MeetingSelected(race.round.toInt()))
+
+            }) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = race.raceName,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.Center)
+            )
         }
     }
 }
@@ -130,7 +168,7 @@ fun NavGraphBuilder.homeGraph(
 @Preview
 fun MeetingCardPreview() {
     val meeting = Meeting(
-        meetingOfficialName = "The jackwagon grand prix"
+        meetingName = "The jackwagon grand prix"
     )
     MeetingCard({}, meeting)
 
@@ -138,6 +176,6 @@ fun MeetingCardPreview() {
 
 @Composable
 @Preview
-fun HomeScreenPreview() {
-    HomeScreen(NavController(LocalContext.current))
+fun RaceResultCardPreview() {
+    RaceResultCard({}, TestFactory.createResultsItem())
 }

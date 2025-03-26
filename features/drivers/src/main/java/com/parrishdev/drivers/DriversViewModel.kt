@@ -3,7 +3,6 @@ package com.parrishdev.drivers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.parrishdev.data.F1DriversApi
-import com.parrishdev.model.Driver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
