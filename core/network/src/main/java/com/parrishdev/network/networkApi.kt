@@ -1,8 +1,10 @@
 package com.parrishdev.network
 
-import com.parrishdev.model.Driver
-import com.parrishdev.model.Meeting
-import com.parrishdev.model.RaceResultsResponse
+
+
+import com.parrishdev.network.responses.Driver
+import com.parrishdev.network.responses.Meeting
+import com.parrishdev.network.responses.RaceResultsResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

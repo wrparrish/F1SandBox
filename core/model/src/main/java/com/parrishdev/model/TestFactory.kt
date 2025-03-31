@@ -1,8 +1,8 @@
 package com.parrishdev.model
 
 object TestFactory {
-    fun createResultsItem(): RacesItem {
-        return RacesItem(
+    fun createResultsItem(): RaceWithResultData {
+        return RaceWithResultData(
             raceName = "Test Race",
             round = "1",
             results = listOf(

@@ -1,4 +1,4 @@
-package com.parrishdev.model
+package com.parrishdev.network.responses
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

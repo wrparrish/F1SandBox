@@ -1,7 +1,7 @@
 package com.parrishdev.network
 
 import android.content.Context
-import com.parrishdev.model.Driver
+import com.parrishdev.network.responses.Driver
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types

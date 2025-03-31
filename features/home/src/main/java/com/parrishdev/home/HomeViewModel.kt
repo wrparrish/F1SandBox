@@ -37,7 +37,7 @@ class HomeViewModel @Inject constructor(private val meetingsApi: MeetingsApi) : 
             }.onSuccess {
                 _viewState.value = viewState.value.copy(
                     isLoading = false,
-                    results = it.getOrThrow().data.raceTable.races.orEmpty()
+                    results = it.getOrThrow()
                 )
             }.onFailure {
                 _viewState.value = viewState.value.copy(
@@ -54,35 +54,7 @@ class HomeViewModel @Inject constructor(private val meetingsApi: MeetingsApi) : 
             }
         }
     }
-
-/*
-    private fun fetchMeetings() {
-        viewModelScope.launch {
-            val wrappedResult = runCatching {
-                meetingsApi.fetchMeetings()
-            }.onSuccess {
-
-                _viewState.value = viewState.value.copy(
-                    isLoading = false,
-                    meetings = it.getOrThrow()
-                )
-            }.onFailure {
-                _viewState.value = viewState.value.copy(
-                    isLoading = false,
-                    errorMessage = it.message.orEmpty()
-                )
-            }
-
-            if (wrappedResult.isFailure) {
-                _viewState.value = viewState.value.copy(
-                    isLoading = false,
-                    errorMessage = wrappedResult.exceptionOrNull()?.message.orEmpty()
-                )
-            }
-        }
-
-    }
-*/
+    
 
     private fun onMeetingSelected(meetingKey: Int) {
         viewModelScope.launch {

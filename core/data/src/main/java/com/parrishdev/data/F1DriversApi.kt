@@ -1,5 +1,6 @@
 package com.parrishdev.data
 
+import com.parrishdev.data.mappers.toDataModel
 import com.parrishdev.model.Driver
 import com.parrishdev.network.F1Endpoint
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class F1DriversApiImpl @Inject constructor(private val f1Endpoint: F1Endpoint) :
             runCatching {
                 f1Endpoint.getDrivers()
                     .filter { !it.teamName.isNullOrEmpty() }
+                    .map { it.toDataModel() }
             }
         }
     }

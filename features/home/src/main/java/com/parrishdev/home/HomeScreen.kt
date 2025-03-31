@@ -27,8 +27,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.parrishdev.model.Meeting
-import com.parrishdev.model.RacesItem
+import com.parrishdev.model.Circuit
+import com.parrishdev.model.Location
+import com.parrishdev.model.RaceWithResultData
 import com.parrishdev.model.TestFactory
 import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.ui.common.Error
@@ -41,7 +42,6 @@ fun HomeScreen(
     val viewModel: HomeViewModel = hiltViewModel()
     val state = viewModel.viewState.collectAsState().value
     val events = state.events
-    val meetings = state.meetings
 
     LaunchedEffect(key1 = true) {
         viewModel.viewEffects.collect {
@@ -65,14 +65,13 @@ fun HomeScreen(
         }
 
         else -> {
-            // MeetingList(events, meetings)
             RaceResultList(events, state.results)
         }
     }
 }
 
 @Composable
-fun MeetingList(events: (HomeEvent) -> Unit, meetings: List<Meeting>) {
+fun RaceList(events: (HomeEvent) -> Unit, meetings: List<RaceWithResultData>) {
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = Modifier
@@ -80,13 +79,13 @@ fun MeetingList(events: (HomeEvent) -> Unit, meetings: List<Meeting>) {
         state = listState
     ) {
         items(meetings) { meeting ->
-            MeetingCard(events, meeting)
+            RaceCard(events, meeting)
         }
     }
 }
 
 @Composable
-fun RaceResultList(events: (HomeEvent) -> Unit, races: List<RacesItem>) {
+fun RaceResultList(events: (HomeEvent) -> Unit, races: List<RaceWithResultData>) {
     val listState = rememberLazyListState()
     LazyColumn(
         modifier = Modifier
@@ -100,7 +99,7 @@ fun RaceResultList(events: (HomeEvent) -> Unit, races: List<RacesItem>) {
 }
 
 @Composable
-fun RaceResultCard(events: (HomeEvent) -> Unit, race: RacesItem) {
+fun RaceResultCard(events: (HomeEvent) -> Unit, race: RaceWithResultData) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -121,18 +120,22 @@ fun RaceResultCard(events: (HomeEvent) -> Unit, race: RacesItem) {
 }
 
 @Composable
-fun MeetingCard(events: (HomeEvent) -> Unit, meeting: Meeting, modifier: Modifier = Modifier) {
+fun RaceCard(
+    events: (HomeEvent) -> Unit,
+    race: RaceWithResultData,
+    modifier: Modifier = Modifier
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
             .padding(16.dp)
             .clickable {
-                events(HomeEvent.MeetingSelected(meeting.meetingKey))
+                events(HomeEvent.MeetingSelected(race.round.toInt()))
             },
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = meeting.meetingName,
+                text = race.raceName,
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.Center)
@@ -167,10 +170,24 @@ fun NavGraphBuilder.homeGraph(
 @Composable
 @Preview
 fun MeetingCardPreview() {
-    val meeting = Meeting(
-        meetingName = "The jackwagon grand prix"
+    val race = RaceWithResultData(
+        date = "2023-03-10",
+        round = "1",
+        results = null,
+        season = "2023",
+        circuit = Circuit(
+            circuitId = "test",
+            url = "test",
+            circuitName = "test",
+            Location(
+                lat = "test",
+                long = "test",
+                locality = "test",
+
+                )
+        )
     )
-    MeetingCard({}, meeting)
+    RaceCard({}, race)
 
 }
 

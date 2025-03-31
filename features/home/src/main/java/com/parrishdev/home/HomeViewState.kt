@@ -1,13 +1,11 @@
 package com.parrishdev.home
 
-import com.parrishdev.model.Meeting
-import com.parrishdev.model.RacesItem
+import com.parrishdev.model.RaceWithResultData
 
 data class HomeViewState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val meetings: List<Meeting> = emptyList(),
-    val results: List<RacesItem> = emptyList(),
+    val results: List<RaceWithResultData> = emptyList(),
     val events: (HomeEvent) -> Unit = {}
 )
 
