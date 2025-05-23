@@ -29,5 +29,8 @@ data class Driver(
     @Json(name = "first_name")
     val firstName: String? = null,
     @Json(name = "team_name")
-    val teamName: String? = null
+    val teamName: String? = null,
+    // Added for driver standings integration
+    var points: String = "0",
+    var position: String? = null
 )
