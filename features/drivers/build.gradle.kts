@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    id("io.github.takahirom.roborazzi") // Added Roborazzi plugin
 }
 
 android {
@@ -68,4 +69,12 @@ dependencies {
 
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+
+    // Roborazzi and Snapshot testing dependencies
+    testImplementation(libs.junit) // Already present, but ensure it's there
+    testImplementation(libs.androidx.ui.test.junit4) // Uses version from Compose BOM
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.9.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.9.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-junit-rule:1.9.0") // Using JUnit Rule
+    testImplementation(project(":core:ui")) // For F1SandboxTheme access
 }

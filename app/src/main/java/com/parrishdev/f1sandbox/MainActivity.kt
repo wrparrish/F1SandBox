@@ -78,7 +78,7 @@ fun AppNavigationHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Routes.Home.GRAPH,
+        startDestination = Routes.Drivers.GRAPH,
         modifier = Modifier.padding(paddingValues)
     ) {
         homeGraph(rootNavController = navController, sharedViewModel)

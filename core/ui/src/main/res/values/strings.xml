@@ -1,0 +1,4 @@
+<resources>
+    <string name="drivers_screen_title">Drivers</string>
+    <string name="driver_details_screen_title_prefix">Details: %1$s</string>
+</resources>

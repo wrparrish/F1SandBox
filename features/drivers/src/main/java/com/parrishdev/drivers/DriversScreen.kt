@@ -20,9 +20,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext // Added
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.parrishdev.ui.R // Added
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -86,10 +88,11 @@ fun DriversList(viewModel: DriversViewModel, drivers: List<Driver>, modifier: Mo
             DriverCard(
                 driver, modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
+                    //.height(160.dp) // Height can be dynamic
                     .padding(16.dp)
                     .clickable {
-                        viewModel.onDriverSelected(driver.driverNumber.toString())
+                        // Use nameAcronym for selection as it's used for matching with standings
+                        viewModel.onDriverSelected(driver.nameAcronym ?: driver.driverNumber.toString())
                     }
             )
         }
@@ -109,12 +112,16 @@ fun DriverCard(driver: Driver, modifier: Modifier = Modifier) {
                     .height(120.dp)
             )
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = driver.fullName ?: "bad data, check logs")
-                Text(text = driver.teamName ?: "bad data, check logs")
+            Column(modifier = Modifier.padding(16.dp).weight(1f)) { // Added weight for text column
+                Text(text = driver.fullName ?: "Unknown Driver")
+                Text(text = driver.teamName ?: "Unknown Team")
+                driver.position?.let { // Display position if available
+                    Text(text = "Pos: $it")
+                }
+                Text(text = "Pts: ${driver.points}") // Points defaults to "0"
             }
 
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.padding(start = 8.dp)) { // Reduced padding for number box
 
                 Text(
                     text = driver.driverNumber.toString(),
@@ -136,16 +143,16 @@ fun DriverEntryPreview() {
         countryCode = "ES",
         fullName = "Fernando Alonso",
         teamName = "Aston Martin",
-        headshotUrl = "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png.transform/1col/image.png"
+        headshotUrl = "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png.transform/1col/image.png",
+        points = "180",
+        position = "4"
     )
     DriverCard(
         driver, modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp)
+            //.height(160.dp) // Height can be dynamic
             .padding(16.dp)
     )
-
-
 }
 
 
@@ -155,18 +162,33 @@ fun NavGraphBuilder.driversGraph(
 ) {
     navigation(startDestination = Routes.Drivers.SCREEN, route = Routes.Drivers.GRAPH) {
         composable(route = Routes.Drivers.SCREEN) {
-            sharedViewModel.updateTitle("Drivers")
+            val context = LocalContext.current
+            sharedViewModel.updateTitle(context.getString(R.string.drivers_screen_title))
             DriversScreen(
-                rootNavController
+                rootNavController = rootNavController
             )
         }
         composable(
             route = Routes.DriverDetails.SCREEN,
             arguments = listOf(navArgument(Routes.DriverDetails.ARG_DRIVER_ID) {
                 type = NavType.StringType
+                // Potentially add nullable = true if a driverId could ever be missing, though unlikely for this screen
             })
         ) {
-            Text("Driver Details Screen for ${it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)}")
+            val context = LocalContext.current
+            // The driverId is extracted in the DriverDetailsViewModel via SavedStateHandle
+            // The driverId from the arguments can also be used to update the title dynamically if needed
+            val driverIdArg = it.arguments?.getString(Routes.DriverDetails.ARG_DRIVER_ID)
+            sharedViewModel.updateTitle(
+                context.getString(
+                    R.string.driver_details_screen_title_prefix,
+                    driverIdArg?.uppercase() ?: "Driver" // Fallback if driverIdArg is null
+                )
+            )
+            DriverDetailsScreen(
+                navController = rootNavController
+                // ViewModel will be hiltViewModel() by default in DriverDetailsScreen
+            )
         }
     }
 }
