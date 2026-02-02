@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.2"
+agp = "8.13.2"
 coilCompose = "3.1.0"
 room = "2.6.1"
 coreTesting = "2.2.0"
