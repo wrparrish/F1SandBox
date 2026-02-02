@@ -66,6 +66,10 @@ dependencies {
     // Domain models
     implementation(project(":race:lib-models-race"))
 
+    //Fixtures for compose preview
+    implementation(project(":race:lib-models-race-fixtures"))
+
+
     // Results feature (for navigation graph)
     implementation(project(":race:feature-results"))
 

@@ -63,6 +63,10 @@ dependencies {
     // Domain models
     implementation(project(":race:lib-models-race"))
 
+    //Fixtures for compose previews
+    implementation(project(":race:lib-models-race-fixtures"))
+
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

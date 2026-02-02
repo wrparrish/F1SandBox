@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.parrishdev.race.model.Constructor
-import com.parrishdev.race.model.RaceDriver
+import com.parrishdev.race.fixtures.createRaceResult
+import com.parrishdev.race.fixtures.createRaceWithResults
 import com.parrishdev.race.model.RaceResult
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
@@ -222,30 +222,25 @@ private fun ResultRow(result: RaceResult) {
 
 @Preview(showBackground = true)
 @Composable
-private fun ResultRowPreview() {
-    val result = RaceResult(
-        position = 1,
-        positionText = "1",
-        points = 25f,
-        driver = RaceDriver(
-            id = "verstappen",
-            permanentNumber = "1",
-            code = "VER",
-            givenName = "Max",
-            familyName = "Verstappen",
-            nationality = "Dutch",
-            url = ""
-        ),
-        constructor = Constructor(
-            id = "red_bull",
-            name = "Red Bull Racing",
-            nationality = "Austrian",
-            url = ""
-        ),
-        grid = 1,
-        laps = 57,
-        status = "Finished",
-        fastestLap = null
+private fun RaceResultPreview() {
+    val raceWithResults = createRaceWithResults()
+    val state = ResultsViewState(
+        isLoading = false,
+        isRefreshing = false,
+        results = raceWithResults.results,
+        raceName = raceWithResults.race.name,
+        circuitName = raceWithResults.race.circuit.name,
+        date = raceWithResults.race.date,
+        errorMessage = null
     )
-    ResultRow(result = result)
+
+    ResultsScreenContent(state, onRefresh = {}, onRetry = {})
+
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun ResultRowPreview() {
+    ResultRow(result = createRaceResult())
 }

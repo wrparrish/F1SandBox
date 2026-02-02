@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.parrishdev.race.fixtures.createRaceList
 import com.parrishdev.race.model.Circuit
 import com.parrishdev.race.model.Location
 import com.parrishdev.race.model.Race
@@ -191,6 +192,12 @@ private fun EmptyState() {
             textAlign = TextAlign.Center
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RaceListPreview() {
+    RaceList(races = createRaceList(), onRaceSelected = {})
 }
 
 @Preview(showBackground = true)
