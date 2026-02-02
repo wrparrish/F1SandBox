@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
@@ -56,6 +57,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
 
+    implementation(libs.kotlinx.serialization.json)
+
     implementation(libs.retrofit)
     implementation(libs.converter.moshi)
     implementation(libs.okhttp)
@@ -64,11 +67,28 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(project(":core:ui"))
     implementation(project(":core:navigation"))
-    implementation(project(":features:home"))
-    implementation(project(":features:settings"))
-    implementation(project(":features:drivers"))
-    implementation(project(":core:data"))
-    implementation(project(":core:network"))
+
+    // Race domain modules
+    implementation(project(":race:contracts"))
+    implementation(project(":race:feature-home"))
+    implementation(project(":race:feature-results"))
+    implementation(project(":race:lib-store-race-impl"))
+    implementation(project(":race:lib-api-race"))
+
+    // Driver domain modules
+    implementation(project(":driver:contracts"))
+    implementation(project(":driver:feature-drivers"))
+    implementation(project(":driver:lib-store-driver-impl"))
+    implementation(project(":driver:lib-api-driver"))
+
+    // Settings domain modules
+    implementation(project(":settings:contracts"))
+    implementation(project(":settings:feature-settings"))
+
+    // Core infrastructure
+    implementation(project(":core:common"))
+    implementation(project(":core:database"))
+
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)

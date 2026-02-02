@@ -1,6 +1,5 @@
 package com.parrishdev.f1sandbox
 
-import Routes
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,10 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import com.parrishdev.drivers.driversGraph
-import com.parrishdev.home.homeGraph
+import com.parrishdev.driver.drivers.driverGraph
 import com.parrishdev.navigation.SharedViewModel
-import com.parrishdev.settings.settingsGraph
+import com.parrishdev.race.contracts.RaceGraph
+import com.parrishdev.race.home.raceGraph
+import com.parrishdev.settings.feature.settingsGraph
 import com.parrishdev.ui.F1SandboxTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -56,35 +56,34 @@ class MainActivity : ComponentActivity() {
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "Tap to go back"
                                     )
-
-
                                 }
                             }
                         )
                     },
                     bottomBar = { BottomNavigationBar(navController) }) { innerPadding ->
-                    AppNavigationHost(innerPadding, navController, sharedViewModel)
+                    AppNavigationHost(innerPadding, navController)
                 }
             }
         }
     }
 }
 
+/**
+ * Main navigation host with type-safe routes.
+ * Uses Navigation Compose 2.8+ typed navigation API.
+ */
 @Composable
 fun AppNavigationHost(
     paddingValues: PaddingValues,
     navController: NavHostController,
-    sharedViewModel: SharedViewModel
 ) {
     NavHost(
         navController = navController,
-        startDestination = Routes.Home.GRAPH,
+        startDestination = RaceGraph,
         modifier = Modifier.padding(paddingValues)
     ) {
-        homeGraph(rootNavController = navController, sharedViewModel)
-        settingsGraph(sharedViewModel)
-        driversGraph(rootNavController = navController, sharedViewModel = sharedViewModel)
+        raceGraph(rootNavController = navController)
+        settingsGraph()
+        driverGraph(rootNavController = navController)
     }
-
 }
-

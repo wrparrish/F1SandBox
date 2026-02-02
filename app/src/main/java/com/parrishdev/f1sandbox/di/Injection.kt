@@ -1,13 +1,6 @@
 package com.parrishdev.f1sandbox.di
 
-import com.parrishdev.data.F1DriversApi
-import com.parrishdev.data.F1DriversApiImpl
-import com.parrishdev.data.MeetingsApi
-import com.parrishdev.data.MeetingsApiImpl
-import com.parrishdev.network.ErgastEndpoint
-import com.parrishdev.network.F1Endpoint
 import com.squareup.moshi.Moshi
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,37 +15,18 @@ import javax.inject.Named
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class DataModule {
-    @Binds
-    abstract fun bindF1DriversApi(impl: F1DriversApiImpl): F1DriversApi
-
-    @Binds
-    abstract fun bindMeetingsApi(impl: MeetingsApiImpl): MeetingsApi
-
-
-    companion object {
-        @Provides
-        @Singleton
-        fun provideF1DriversApiImpl(f1Endpoint: F1Endpoint): F1DriversApiImpl {
-            return F1DriversApiImpl(f1Endpoint)
-        }
-
-        @Provides
-        @Singleton
-        fun provideMeetingsApiImpl(ergastEndpoint: ErgastEndpoint): MeetingsApiImpl {
-            return MeetingsApiImpl(ergastEndpoint)
-        }
-    }
-}
-
-
+/**
+ * Network infrastructure module.
+ *
+ * Provides shared network components used by domain-specific API modules:
+ * - driver/lib-api-driver uses @Named("OpenF1") Retrofit
+ * - race/lib-api-race uses @Named("Jolpica") Retrofit
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    private const val BASE_URL = "https://api.openf1.org/v1/"
-    private const val ERGAST_BASE_URL = "https://api.jolpi.ca/ergast/f1/"
+    private const val OPENF1_BASE_URL = "https://api.openf1.org/v1/"
+    private const val JOLPICA_BASE_URL = "https://api.jolpi.ca/ergast/f1/"
 
     @Provides
     @Singleton
@@ -77,9 +51,9 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("OpenF1")
-    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideOpenF1Retrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(OPENF1_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
@@ -87,25 +61,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideF1Endpoint(@Named("OpenF1") retrofit: Retrofit): F1Endpoint {
-        return retrofit.create(F1Endpoint::class.java)
-    }
-
-    @Provides
-    @Singleton
-    @Named("Ergast")
-    fun provideErgastRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    @Named("Jolpica")
+    fun provideJolpicaRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(ERGAST_BASE_URL)
+            .baseUrl(JOLPICA_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideErgastEndpoint(@Named("Ergast") retrofit: Retrofit): ErgastEndpoint {
-        return retrofit.create(ErgastEndpoint::class.java)
     }
 }
 

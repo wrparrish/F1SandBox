@@ -15,13 +15,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
-import com.parrishdev.model.Driver
 
+/**
+ * A reusable composable for displaying headshot images with loading and error states.
+ * Uses Coil for async image loading with a placeholder for errors.
+ */
 @Composable
-fun DriverHeadshot(driver: Driver, modifier: Modifier = Modifier) {
+fun HeadshotImage(
+    imageUrl: String?,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
     SubcomposeAsyncImage(
-        model = driver.headshotUrl,
-        contentDescription = "Driver Profile Picture",
+        model = imageUrl,
+        contentDescription = contentDescription,
         modifier = modifier
     ) {
         val state = painter.state.collectAsState()
