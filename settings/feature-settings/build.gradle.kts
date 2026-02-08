@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
 
+    // Core UI
+    implementation(project(":core:ui"))
+
+
     // UDF Framework
     implementation(project(":core:common"))
 

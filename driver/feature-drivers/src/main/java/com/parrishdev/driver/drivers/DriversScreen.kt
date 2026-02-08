@@ -2,11 +2,15 @@ package com.parrishdev.driver.drivers
 
 import androidx.compose.foundation.Image
 import com.parrishdev.ui.common.singleClickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +35,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,14 +47,13 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.parrishdev.driver.model.Driver
+import com.parrishdev.ui.F1Red
+import com.parrishdev.ui.F1SandboxTheme
+import com.parrishdev.ui.GhostGrey
+import com.parrishdev.ui.GoldFirst
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
 
-/**
- * Drivers screen displaying list of F1 drivers.
- *
- * @param onNavigateToDetails Called when user selects a driver
- */
 @Composable
 fun DriversScreen(
     onNavigateToDetails: (driverNumber: Int) -> Unit,
@@ -57,21 +62,17 @@ fun DriversScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewState by viewModel.stateFlow.collectAsStateWithLifecycle()
 
-    // Set up lifecycle-aware store observations
     LaunchedEffect(lifecycleOwner) {
         viewModel.onStartObserving(lifecycleOwner)
     }
 
-    // Handle one-time events
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is DriversEvent.NavigateToDriverDetails -> {
                     onNavigateToDetails(event.driverNumber)
                 }
-                is DriversEvent.ShowError -> {
-                    // Could show snackbar here. Would need remember(snackbarstate) etc, + scaffold
-                }
+                is DriversEvent.ShowError -> {}
             }
         }
     }
@@ -93,20 +94,13 @@ private fun DriversScreenContent(
     onRetry: () -> Unit
 ) {
     when {
-        viewState.isLoading -> {
-            Loading()
-        }
+        viewState.isLoading -> Loading()
 
         viewState.errorMessage != null && viewState.drivers.isEmpty() -> {
-            Error(
-                errorMessage = viewState.errorMessage,
-                onRetry = onRetry
-            )
+            Error(errorMessage = viewState.errorMessage, onRetry = onRetry)
         }
 
-        viewState.showEmptyState -> {
-            EmptyState()
-        }
+        viewState.showEmptyState -> EmptyState()
 
         else -> {
             PullToRefreshBox(
@@ -114,10 +108,7 @@ private fun DriversScreenContent(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize()
             ) {
-                DriversList(
-                    drivers = viewState.drivers,
-                    onDriverSelected = onDriverSelected
-                )
+                DriversList(drivers = viewState.drivers, onDriverSelected = onDriverSelected)
             }
         }
     }
@@ -130,17 +121,11 @@ private fun DriversList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(
-            items = drivers,
-            key = { it.driverNumber }
-        ) { driver ->
-            DriverCard(
-                driver = driver,
-                onClick = { onDriverSelected(driver) }
-            )
+        items(items = drivers, key = { it.driverNumber }) { driver ->
+            DriverCard(driver = driver, onClick = { onDriverSelected(driver) })
         }
     }
 }
@@ -150,60 +135,103 @@ private fun DriverCard(
     driver: Driver,
     onClick: () -> Unit
 ) {
+    val teamColor = parseTeamColor(driver.teamColour)
+
     Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
             .singleClickable(onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Driver headshot
+            // Team color accent strip
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp))
+                    .background(teamColor)
+            )
+
+            // Headshot
             DriverHeadshot(
                 headshotUrl = driver.headshotUrl,
                 contentDescription = "${driver.fullName} headshot",
                 modifier = Modifier
-                    .height(100.dp)
-                    .width(80.dp)
-                    .padding(start = 8.dp)
+                    .height(90.dp)
+                    .width(72.dp)
+                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
             )
 
             // Driver info
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = driver.fullName,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = driver.teamName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                Text(
-                    text = driver.countryCode,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp)
+                    color = teamColor,
                 )
+                if (driver.championshipPosition > 0) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "P${driver.championshipPosition}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (driver.championshipPosition <= 3) GoldFirst
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = "${driver.championshipPoints.toInt()} PTS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GhostGrey,
+                        )
+                        if (driver.wins > 0) {
+                            Text(
+                                text = "${driver.wins}W",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GhostGrey,
+                            )
+                        }
+                    }
+                }
             }
 
             // Driver number
             Text(
                 text = driver.driverNumber.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.headlineLarge,
+                color = teamColor.copy(alpha = 0.6f),
                 modifier = Modifier.padding(end = 16.dp)
             )
         }
+    }
+}
+
+private fun parseTeamColor(hex: String): Color {
+    return try {
+        Color(android.graphics.Color.parseColor("#$hex"))
+    } catch (_: Exception) {
+        Color(0xFFAAAAAC)
     }
 }
 
@@ -216,7 +244,7 @@ private fun DriverHeadshot(
     SubcomposeAsyncImage(
         model = headshotUrl,
         contentDescription = contentDescription,
-        modifier = modifier
+        modifier = modifier.clip(RoundedCornerShape(8.dp))
     ) {
         val state = painter.state.collectAsState()
         when (state.value) {
@@ -226,27 +254,33 @@ private fun DriverHeadshot(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp),
+                        color = F1Red,
+                        strokeWidth = 2.dp,
                     )
                 }
             }
 
             is AsyncImagePainter.State.Error -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            RoundedCornerShape(8.dp)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         imageVector = Icons.Default.Person,
                         contentDescription = contentDescription,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(36.dp),
+                        alpha = 0.4f,
                     )
                 }
             }
 
-            else -> {
-                SubcomposeAsyncImageContent()
-            }
+            else -> SubcomposeAsyncImageContent()
         }
     }
 }
@@ -257,29 +291,44 @@ private fun EmptyState() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "No drivers found",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "NO DRIVERS FOUND",
+                style = MaterialTheme.typography.labelLarge,
+                color = GhostGrey,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Pull down to refresh",
+                style = MaterialTheme.typography.bodyMedium,
+                color = GhostGrey,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0F)
 @Composable
 private fun DriverCardPreview() {
     val driver = Driver(
-        driverNumber = 14,
-        firstName = "Fernando",
-        lastName = "Alonso",
-        fullName = "Fernando Alonso",
-        nameAcronym = "ALO",
-        countryCode = "ES",
-        teamName = "Aston Martin",
-        teamColour = "006F62",
+        driverNumber = 4,
+        firstName = "Lando",
+        lastName = "Norris",
+        fullName = "Lando Norris",
+        nameAcronym = "NOR",
+        countryCode = "GB",
+        teamName = "McLaren",
+        teamColour = "F47600",
         headshotUrl = null,
-        broadcastName = "F ALONSO",
-        sessionKey = 9158
+        broadcastName = "L NORRIS",
+        sessionKey = 9158,
+        championshipPosition = 1,
+        championshipPoints = 180f,
+        wins = 4
     )
-    DriverCard(driver = driver, onClick = {})
+    F1SandboxTheme(darkTheme = true) {
+        DriverCard(driver = driver, onClick = {})
+    }
 }

@@ -1,14 +1,20 @@
 package com.parrishdev.race.home
 
-import androidx.compose.foundation.clickable
 import com.parrishdev.ui.common.singleClickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,17 +37,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.parrishdev.race.fixtures.createRaceList
-import com.parrishdev.race.model.Circuit
-import com.parrishdev.race.model.Location
 import com.parrishdev.race.model.Race
+import com.parrishdev.ui.F1Red
+import com.parrishdev.ui.F1SandboxTheme
+import com.parrishdev.ui.GhostGrey
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
 
-/**
- * Home screen displaying list of races for the current season.
- *
- * @param onNavigateToResults Called when user selects a race
- */
 @Composable
 fun HomeScreen(
     onNavigateToResults: (season: Int, round: Int) -> Unit,
@@ -49,21 +52,17 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewState by viewModel.stateFlow.collectAsStateWithLifecycle()
 
-    // Set up lifecycle-aware store observations
     LaunchedEffect(lifecycleOwner) {
         viewModel.onStartObserving(lifecycleOwner)
     }
 
-    // Handle one-time events
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is HomeEvent.NavigateToRaceResults -> {
                     onNavigateToResults(event.season, event.round)
                 }
-                is HomeEvent.ShowError -> {
-                    // Could show snackbar here
-                }
+                is HomeEvent.ShowError -> {}
             }
         }
     }
@@ -85,20 +84,13 @@ private fun HomeScreenContent(
     onRetry: () -> Unit
 ) {
     when {
-        viewState.isLoading -> {
-            Loading()
-        }
+        viewState.isLoading -> Loading()
 
         viewState.errorMessage != null && viewState.races.isEmpty() -> {
-            Error(
-                errorMessage = viewState.errorMessage,
-                onRetry = onRetry
-            )
+            Error(errorMessage = viewState.errorMessage, onRetry = onRetry)
         }
 
-        viewState.showEmptyState -> {
-            EmptyState()
-        }
+        viewState.showEmptyState -> EmptyState()
 
         else -> {
             PullToRefreshBox(
@@ -106,10 +98,7 @@ private fun HomeScreenContent(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize()
             ) {
-                RaceList(
-                    races = viewState.races,
-                    onRaceSelected = onRaceSelected
-                )
+                RaceList(races = viewState.races, onRaceSelected = onRaceSelected)
             }
         }
     }
@@ -122,17 +111,11 @@ private fun RaceList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(
-            items = races,
-            key = { it.id }
-        ) { race ->
-            RaceCard(
-                race = race,
-                onClick = { onRaceSelected(race) }
-            )
+        items(items = races, key = { it.id }) { race ->
+            RaceCard(race = race, onClick = { onRaceSelected(race) })
         }
     }
 }
@@ -143,40 +126,90 @@ private fun RaceCard(
     onClick: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .singleClickable(onClick = onClick)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .height(IntrinsicSize.Min)
         ) {
-            Text(
-                text = "Round ${race.round}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+            // Red accent strip
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
+                    .background(F1Red)
             )
-            Text(
-                text = race.name,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Text(
-                text = "${race.circuit.name} • ${race.circuit.location.country}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Text(
-                text = race.date,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp)
-            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "ROUND ${race.round}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = F1Red,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = race.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = race.circuit.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "${race.circuit.location.locality}, ${race.circuit.location.country}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GhostGrey,
+                    )
+                    Text(
+                        text = formatRaceDate(race.date),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
+    }
+}
+
+private fun formatRaceDate(dateString: String): String {
+    return try {
+        val parts = dateString.split("-")
+        val month = when (parts[1]) {
+            "01" -> "JAN"; "02" -> "FEB"; "03" -> "MAR"; "04" -> "APR"
+            "05" -> "MAY"; "06" -> "JUN"; "07" -> "JUL"; "08" -> "AUG"
+            "09" -> "SEP"; "10" -> "OCT"; "11" -> "NOV"; "12" -> "DEC"
+            else -> parts[1]
+        }
+        "${parts[2].trimStart('0')} $month"
+    } catch (_: Exception) {
+        dateString
     }
 }
 
@@ -186,42 +219,28 @@ private fun EmptyState() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "No races found",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "NO RACES FOUND",
+                style = MaterialTheme.typography.labelLarge,
+                color = GhostGrey,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Pull down to refresh",
+                style = MaterialTheme.typography.bodyMedium,
+                color = GhostGrey,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0F)
 @Composable
 private fun RaceListPreview() {
-    RaceList(races = createRaceList(), onRaceSelected = {})
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun RaceCardPreview() {
-    val race = Race(
-        id = "2025_1",
-        season = 2025,
-        round = 1,
-        name = "Bahrain Grand Prix",
-        date = "2025-03-02",
-        time = "15:00:00Z",
-        circuit = Circuit(
-            id = "bahrain",
-            name = "Bahrain International Circuit",
-            location = Location(
-                locality = "Sakhir",
-                country = "Bahrain",
-                latitude = "26.0325",
-                longitude = "50.5106"
-            ),
-            url = ""
-        ),
-        url = ""
-    )
-    RaceCard(race = race, onClick = {})
+    F1SandboxTheme(darkTheme = true) {
+        RaceList(races = createRaceList(), onRaceSelected = {})
+    }
 }

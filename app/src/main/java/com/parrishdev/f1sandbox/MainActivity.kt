@@ -13,14 +13,18 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.parrishdev.driver.drivers.driverGraph
 import com.parrishdev.navigation.SharedViewModel
@@ -34,33 +38,48 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val sharedViewModel: SharedViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            F1SandboxTheme {
+            F1SandboxTheme(darkTheme = true) {
                 val navController = rememberNavController()
                 val currentTitle = sharedViewModel.currentTitle.collectAsState()
-                Scaffold(modifier = Modifier.fillMaxSize(),
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val canGoBack = navBackStackEntry?.destination?.parent?.startDestinationRoute !=
+                    navBackStackEntry?.destination?.route
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background,
                     topBar = {
-                        @OptIn(ExperimentalMaterial3Api::class)
                         TopAppBar(
                             title = {
-                                Text(currentTitle.value)
+                                Text(
+                                    text = currentTitle.value.uppercase(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
                             },
                             navigationIcon = {
-                                IconButton(onClick = {
-                                    navController.navigateUp()
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Tap to go back"
-                                    )
+                                if (canGoBack) {
+                                    IconButton(onClick = { navController.navigateUp() }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = "Navigate back"
+                                        )
+                                    }
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.background,
+                                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                            ),
                         )
                     },
-                    bottomBar = { BottomNavigationBar(navController) }) { innerPadding ->
+                    bottomBar = { BottomNavigationBar(navController) }
+                ) { innerPadding ->
                     AppNavigationHost(innerPadding, navController)
                 }
             }
@@ -68,10 +87,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/**
- * Main navigation host with type-safe routes.
- * Uses Navigation Compose 2.8+ typed navigation API.
- */
 @Composable
 fun AppNavigationHost(
     paddingValues: PaddingValues,
