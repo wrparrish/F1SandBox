@@ -31,8 +31,6 @@ class ResultsViewModel @Inject constructor(
 ) {
     private val season: Int = savedStateHandle.get<Int>("season") ?: java.time.Year.now().value
     private val round: Int = savedStateHandle.get<Int>("round") ?: 1
-    private var hasStartedObserving = false
-
     init {
         // Initial data refresh (non-blocking)
         refreshResults(force = false)
@@ -43,9 +41,6 @@ class ResultsViewModel @Inject constructor(
      * Collection automatically stops when UI is in background and restarts when visible.
      */
     override fun onStartObserving(lifecycleOwner: LifecycleOwner) {
-        if (hasStartedObserving) return
-        hasStartedObserving = true
-
         observeWithLifecycle(
             lifecycleOwner = lifecycleOwner,
             flow = raceStore.streamRaceWithResults(season, round)

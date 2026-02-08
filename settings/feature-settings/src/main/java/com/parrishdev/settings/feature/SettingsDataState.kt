@@ -3,12 +3,12 @@ package com.parrishdev.settings.feature
 /**
  * Internal data state for [SettingsViewModel].
  *
- * Contains the current state of all settings toggles.
- * In a production app, these would be persisted to DataStore/SharedPreferences.
+ * [darkModeEnabled] is loaded from [SettingsStore] and persisted to DataStore.
+ * Other settings remain in-memory only for now.
  */
 data class SettingsDataState(
     val notificationsEnabled: Boolean = true,
-    val darkModeEnabled: Boolean = false,
+    val darkModeEnabled: Boolean = true,
     val showAdvancedOptions: Boolean = false,
     val dataLoggingEnabled: Boolean = true
 )

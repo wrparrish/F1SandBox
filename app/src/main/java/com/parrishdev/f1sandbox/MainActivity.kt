@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,19 +32,27 @@ import com.parrishdev.navigation.SharedViewModel
 import com.parrishdev.race.contracts.RaceGraph
 import com.parrishdev.race.home.raceGraph
 import com.parrishdev.settings.feature.settingsGraph
+import com.parrishdev.settings.store.SettingsStore
 import com.parrishdev.ui.F1SandboxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val sharedViewModel: SharedViewModel by viewModels()
+
+    @Inject
+    lateinit var settingsStore: SettingsStore
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            F1SandboxTheme(darkTheme = true) {
+            val isDarkMode by settingsStore.streamIsDarkMode()
+                .collectAsStateWithLifecycle(initialValue = true)
+
+            F1SandboxTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
                 val currentTitle = sharedViewModel.currentTitle.collectAsState()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()

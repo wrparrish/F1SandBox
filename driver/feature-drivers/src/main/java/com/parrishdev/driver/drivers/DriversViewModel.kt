@@ -27,8 +27,6 @@ class DriversViewModel @Inject constructor(
     stateProvider = stateProvider,
     viewModelBundle = viewModelBundle
 ) {
-    private var hasStartedObserving = false
-
     init {
         // Always force refresh on init to ensure we have current season drivers
         refreshDrivers(force = true)
@@ -39,9 +37,6 @@ class DriversViewModel @Inject constructor(
      * Collection automatically stops when UI is in background and restarts when visible.
      */
     override fun onStartObserving(lifecycleOwner: LifecycleOwner) {
-        if (hasStartedObserving) return
-        hasStartedObserving = true
-
         observeWithLifecycle(
             lifecycleOwner = lifecycleOwner,
             flow = driverStore.streamAllDrivers()

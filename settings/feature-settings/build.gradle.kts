@@ -61,6 +61,9 @@ dependencies {
     // Navigation contracts
     implementation(project(":settings:contracts"))
 
+    // Settings store interface
+    implementation(project(":settings:lib-store-settings"))
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

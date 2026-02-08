@@ -3,10 +3,15 @@ package com.parrishdev.settings.feature
 import app.cash.turbine.test
 import com.parrishdev.common.udf.test.DataStateHolder
 import com.parrishdev.common.udf.test.MainDispatcherRule
+import com.parrishdev.common.udf.test.TestLifecycleOwner
 import com.parrishdev.common.udf.test.createTestViewModelBundle
+import com.parrishdev.settings.store.SettingsStore
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -24,9 +29,7 @@ import org.junit.Test
  * - Toggle interactions for each setting
  * - Event emission for settings that notify users
  * - DataState mutations through StateProvider
- *
- * Note: SettingsViewModel has no Store dependency - all state
- * is managed locally (would be persisted to DataStore in production).
+ * - Dark mode persistence via [SettingsStore]
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -44,6 +47,17 @@ class SettingsViewModelTest {
         }
     }
 
+    private val darkModeFlow = MutableStateFlow(true)
+
+    private val settingsStore = mockk<SettingsStore> {
+        every { streamIsDarkMode() } returns darkModeFlow
+        coEvery { setDarkMode(any()) } coAnswers {
+            darkModeFlow.value = firstArg()
+        }
+    }
+
+    private val testLifecycleOwner = TestLifecycleOwner()
+
     private lateinit var viewModel: SettingsViewModel
 
     @Before
@@ -54,8 +68,11 @@ class SettingsViewModelTest {
     private fun createViewModel(): SettingsViewModel {
         return SettingsViewModel(
             stateProvider = stateProvider,
-            viewModelBundle = createTestViewModelBundle()
-        )
+            viewModelBundle = createTestViewModelBundle(),
+            settingsStore = settingsStore
+        ).also {
+            it.onStartObserving(testLifecycleOwner)
+        }
     }
 
     // region Initialization Tests
@@ -65,9 +82,9 @@ class SettingsViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        val initialState = stateHolder.first()
+        val initialState = stateHolder.latest()
         assertTrue("Notifications should be enabled by default", initialState.notificationsEnabled)
-        assertFalse("Dark mode should be disabled by default", initialState.darkModeEnabled)
+        assertTrue("Dark mode should match store value", initialState.darkModeEnabled)
         assertFalse("Advanced options should be hidden by default", initialState.showAdvancedOptions)
         assertTrue("Data logging should be enabled by default", initialState.dataLoggingEnabled)
     }
@@ -79,7 +96,7 @@ class SettingsViewModelTest {
 
         val viewState = viewModel.stateFlow.value
         assertTrue(viewState.notificationsEnabled)
-        assertFalse(viewState.darkModeEnabled)
+        assertTrue(viewState.darkModeEnabled)
         assertFalse(viewState.showAdvancedOptions)
         assertTrue(viewState.dataLoggingEnabled)
     }
@@ -136,30 +153,27 @@ class SettingsViewModelTest {
     // region Dark Mode Toggle Tests
 
     @Test
-    fun `onDarkModeToggled updates state`() = runTest {
+    fun `onDarkModeToggled persists to settings store`() = runTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onDarkModeToggled(true)
+        viewModel.onDarkModeToggled(false)
         advanceUntilIdle()
 
-        val state = stateHolder.latest()
-        assertTrue(state.darkModeEnabled)
+        coVerify { settingsStore.setDarkMode(false) }
     }
 
     @Test
-    fun `onDarkModeToggled emits ShowSettingChanged event`() = runTest {
+    fun `dark mode state updates when store emits`() = runTest {
         viewModel = createViewModel()
+        advanceUntilIdle()
 
-        viewModel.eventFlow.test {
-            viewModel.onDarkModeToggled(true)
+        assertTrue(stateHolder.latest().darkModeEnabled)
 
-            val event = awaitItem()
-            assertTrue(event is SettingsEvent.ShowSettingChanged)
-            val settingEvent = event as SettingsEvent.ShowSettingChanged
-            assertEquals("Dark Mode", settingEvent.settingName)
-            assertTrue(settingEvent.enabled)
-        }
+        darkModeFlow.value = false
+        advanceUntilIdle()
+
+        assertFalse(stateHolder.latest().darkModeEnabled)
     }
 
     @Test
@@ -167,15 +181,15 @@ class SettingsViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Toggle on
-        viewModel.onDarkModeToggled(true)
-        advanceUntilIdle()
-        assertTrue(stateHolder.latest().darkModeEnabled)
-
         // Toggle off
         viewModel.onDarkModeToggled(false)
         advanceUntilIdle()
         assertFalse(stateHolder.latest().darkModeEnabled)
+
+        // Toggle on
+        viewModel.onDarkModeToggled(true)
+        advanceUntilIdle()
+        assertTrue(stateHolder.latest().darkModeEnabled)
     }
 
     // endregion
@@ -280,14 +294,14 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         viewModel.onNotificationsToggled(false)
-        viewModel.onDarkModeToggled(true)
+        viewModel.onDarkModeToggled(false)
         viewModel.onAdvancedOptionsToggled(true)
         viewModel.onDataLoggingToggled(false)
         advanceUntilIdle()
 
         val state = stateHolder.latest()
         assertFalse(state.notificationsEnabled)
-        assertTrue(state.darkModeEnabled)
+        assertFalse(state.darkModeEnabled)
         assertTrue(state.showAdvancedOptions)
         assertFalse(state.dataLoggingEnabled)
     }
@@ -298,17 +312,13 @@ class SettingsViewModelTest {
 
         viewModel.eventFlow.test {
             viewModel.onNotificationsToggled(false)
-            viewModel.onDarkModeToggled(true)
             viewModel.onDataLoggingToggled(false)
 
             val event1 = awaitItem() as SettingsEvent.ShowSettingChanged
             assertEquals("Notifications", event1.settingName)
 
             val event2 = awaitItem() as SettingsEvent.ShowSettingChanged
-            assertEquals("Dark Mode", event2.settingName)
-
-            val event3 = awaitItem() as SettingsEvent.ShowSettingChanged
-            assertEquals("Data Logging", event3.settingName)
+            assertEquals("Data Logging", event2.settingName)
         }
     }
 
@@ -322,14 +332,14 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         viewModel.onNotificationsToggled(false)
-        viewModel.onDarkModeToggled(true)
+        viewModel.onDarkModeToggled(false)
         viewModel.onAdvancedOptionsToggled(true)
         viewModel.onDataLoggingToggled(false)
         advanceUntilIdle()
 
         val viewState = viewModel.stateFlow.value
         assertFalse(viewState.notificationsEnabled)
-        assertTrue(viewState.darkModeEnabled)
+        assertFalse(viewState.darkModeEnabled)
         assertTrue(viewState.showAdvancedOptions)
         assertFalse(viewState.dataLoggingEnabled)
     }

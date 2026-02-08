@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     implementation(libs.hilt.android)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(project(":core:ui"))
     implementation(project(":core:navigation"))
 
@@ -83,6 +84,8 @@ dependencies {
 
     // Settings domain modules
     implementation(project(":settings:contracts"))
+    implementation(project(":settings:lib-store-settings"))
+    implementation(project(":settings:lib-store-settings-impl"))
     implementation(project(":settings:feature-settings"))
 
     // Core infrastructure

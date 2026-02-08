@@ -1,10 +1,12 @@
 [versions]
 agp = "9.0.0"
-coilCompose = "3.1.0"
+coilCompose = "3.3.0"
+datastore = "1.2.0"
 room = "2.8.4"
 coreTesting = "2.2.0"
-hiltAndroid = "2.54"
-hiltNavigationCompose = "1.2.0"
+hilt = "2.59.1"
+hiltAndroid = "2.59.1"
+hiltNavigationCompose = "1.3.0"
 kotlin = "2.2.10"
 kotlinxSerialization = "1.7.3"
 coreKtx = "1.15.0"
@@ -23,7 +25,6 @@ moshi = "1.15.0"
 navigationCompose = "2.8.8"
 okhttp = "4.12.0"
 retrofit = "2.11.0"
-hilt = "2.54"
 turbine = "1.2.0"
 uiTestManifest = "1.7.8"
 uiTooling = "1.7.8"
@@ -71,6 +72,9 @@ androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "u
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "uiTestManifest" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiTooling" }
+
+# DataStore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Room
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }

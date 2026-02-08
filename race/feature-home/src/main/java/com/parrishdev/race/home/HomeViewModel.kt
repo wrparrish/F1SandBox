@@ -31,8 +31,6 @@ class HomeViewModel @Inject constructor(
 ) {
 
     private val currentSeason = Year.now().value - 1
-    private var hasStartedObserving = false
-
     init {
         // Initial data refresh (non-blocking)
         refreshRaces(force = false)
@@ -46,10 +44,6 @@ class HomeViewModel @Inject constructor(
      * can't see the updates (e.g., app minimized, screen off).
      */
     override fun onStartObserving(lifecycleOwner: LifecycleOwner) {
-        // Prevent multiple observation setups
-        if (hasStartedObserving) return
-        hasStartedObserving = true
-
         observeWithLifecycle(
             lifecycleOwner = lifecycleOwner,
             flow = raceStore.streamRacesForSeason(currentSeason)

@@ -54,4 +54,6 @@ include(":driver:feature-drivers")
 
 // Settings domain modules
 include(":settings:contracts")
+include(":settings:lib-store-settings")
+include(":settings:lib-store-settings-impl")
 include(":settings:feature-settings")
