@@ -28,8 +28,7 @@ class DriversViewModel @Inject constructor(
     viewModelBundle = viewModelBundle
 ) {
     init {
-        // Always force refresh on init to ensure we have current season drivers
-        refreshDrivers(force = true)
+        refreshDrivers(force = false)
     }
 
     /**
@@ -81,7 +80,7 @@ class DriversViewModel @Inject constructor(
         launchWithErrorHandling {
             applyMutation { copy(isRefreshing = force) }
             try {
-                driverStore.refreshLatestDrivers(true)
+                driverStore.refreshLatestDrivers(force = force)
                 // Clear error on successful refresh
                 applyMutation { copy(error = null) }
             } catch (e: Exception) {

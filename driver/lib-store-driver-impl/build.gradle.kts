@@ -35,6 +35,9 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
 
+    //DispatcherProvider
+    implementation(project(":core:common"))
+
     // Store interface
     implementation(project(":driver:lib-store-driver"))
 

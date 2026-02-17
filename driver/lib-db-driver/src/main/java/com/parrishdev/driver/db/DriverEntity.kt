@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "drivers")
 data class DriverEntity(
     @PrimaryKey
-    val id: String, // Composite: "{sessionKey}_{driverNumber}"
+    val id: String, // Composite: "{season}_{driverNumber}"
     val driverNumber: Int,
     val firstName: String,
     val lastName: String,
@@ -28,6 +28,6 @@ data class DriverEntity(
     val lastUpdated: Long = System.currentTimeMillis()
 ) {
     companion object {
-        fun createId(sessionKey: Int, driverNumber: Int): String = "${sessionKey}_$driverNumber"
+        fun createId(season: Int, driverNumber: Int): String = "${season}_$driverNumber"
     }
 }

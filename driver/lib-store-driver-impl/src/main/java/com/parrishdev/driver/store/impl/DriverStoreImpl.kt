@@ -1,17 +1,20 @@
 package com.parrishdev.driver.store.impl
 
 import android.util.Log
+import com.parrishdev.common.udf.DispatcherProvider
 import com.parrishdev.driver.api.DriverApi
 import com.parrishdev.driver.api.StandingsApi
+import com.parrishdev.driver.api.model.DriverDto
 import com.parrishdev.driver.api.model.DriverStandingDto
 import com.parrishdev.driver.db.DriverDao
 import com.parrishdev.driver.db.DriverEntity
 import com.parrishdev.driver.model.Driver
 import com.parrishdev.driver.store.DriverStore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +30,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class DriverStoreImpl @Inject constructor(
+    private val clock: Clock,
+    private val dispatcherProvider: DispatcherProvider,
     private val driverApi: DriverApi,
     private val standingsApi: StandingsApi,
     private val driverDao: DriverDao
@@ -48,7 +53,7 @@ class DriverStoreImpl @Inject constructor(
     }
 
     override suspend fun refreshDrivers(sessionKey: Int, force: Boolean) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcherProvider.io) {
             // Check staleness
             if (!force) {
                 val lastUpdated = driverDao.getLastUpdatedForSession(sessionKey)
@@ -71,7 +76,7 @@ class DriverStoreImpl @Inject constructor(
     }
 
     override suspend fun refreshLatestDrivers(force: Boolean) {
-        withContext(Dispatchers.IO) {
+        withContext(dispatcherProvider.io) {
             // Check staleness using any cached driver's lastUpdated
             if (!force) {
                 val lastUpdated = driverDao.getLatestUpdateTime()
@@ -81,21 +86,42 @@ class DriverStoreImpl @Inject constructor(
             }
 
             // Fetch drivers from OpenF1 (has headshots, team colors)
-            val driverDtos = driverApi.getDrivers("latest")
-
-            // Fetch standings from Jolpica (has points, position)
-            val standingsMap = fetchCurrentStandings()
-
-            // Transform and filter, merging standings data
-            val driverEntities = driverDtos.mapNotNull { dto ->
-                dto.toEntity()?.let { entity ->
-                    mergeWithStandings(entity, standingsMap)
-                }
+            val driverResult = runCatching {
+                driverApi.getDrivers()
             }
 
-            if (driverEntities.isNotEmpty()) {
-                // Atomically replace all drivers to ensure current season only
-                driverDao.replaceAllDrivers(driverEntities)
+            // Fetch standings from Jolpica (has points, position)
+            val standingsResult = runCatching {
+                fetchCurrentStandings()
+            }
+
+            val standings = standingsResult.getOrNull()
+            val drivers: List<DriverDto?>? = driverResult.getOrNull()
+
+            if (standings != null) {
+                if (drivers != null) {
+                    // Transform and filter, merging standings data
+                    val driverEntities = drivers.mapNotNull { dto ->
+                        dto?.toEntity()?.let { entity ->
+                            mergeWithStandings(entity, standings)
+                        }
+                    }
+
+                    if (driverEntities.isNotEmpty()) {
+                        // Atomically replace all drivers to ensure current season only
+                        driverDao.replaceAllDrivers(driverEntities)
+                    }
+                } else {
+                    // degraded path: standings only, no headshots/colors.
+                    val fallbackEntities = standings.mapNotNull { standingEntry ->
+                        val standing = standingEntry.value
+                        standing.toEntity(season = SEASON)
+                    }
+                    driverDao.replaceAllDrivers(fallbackEntities)
+                }
+            } else {
+                throw standingsResult.exceptionOrNull()
+                    ?: IOException("Failed to fetch standings")
             }
         }
     }
@@ -107,15 +133,15 @@ class DriverStoreImpl @Inject constructor(
      */
     private suspend fun fetchCurrentStandings(): Map<String, DriverStandingDto> {
         return try {
-            val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+            val currentSeason = SEASON
 
             // Try current year first
-            var standings = fetchStandingsForSeason(currentYear.toString())
+            var standings = fetchStandingsForSeason(currentSeason.toString())
 
             // If no standings for current year, try previous year
             if (standings.isEmpty()) {
-                Log.d(TAG, "No standings for $currentYear, trying ${currentYear - 1}")
-                standings = fetchStandingsForSeason((currentYear - 1).toString())
+                Log.d(TAG, "No standings for $currentSeason, trying ${currentSeason - 1}")
+                standings = fetchStandingsForSeason((currentSeason - 1).toString())
             }
 
             standings
@@ -127,15 +153,18 @@ class DriverStoreImpl @Inject constructor(
 
     private suspend fun fetchStandingsForSeason(season: String): Map<String, DriverStandingDto> {
         val response = standingsApi.getDriverStandings(season)
-        val standings = response.data.standingsTable.standingsLists
-            ?.firstOrNull()
+        val standings = response.data.standingsTable.standingsLists?.firstOrNull()
+
+        val driverStandings = standings
             ?.driverStandings
             ?: emptyList()
 
         // Create map keyed by driver code for efficient lookup
-        return standings.associateBy { standing ->
-            standing.driver.code?.uppercase() ?: ""
-        }.filterKeys { it.isNotEmpty() }
+        return driverStandings.associateBy { standing ->
+            standing.driver.code?.uppercase().orEmpty()
+        }.filterKeys {
+            it.isNotEmpty()
+        }
     }
 
     /**
@@ -160,11 +189,13 @@ class DriverStoreImpl @Inject constructor(
 
     companion object {
         private const val TAG = "DriverStoreImpl"
+        private const val SEASON = 2025
+
         // Data is stale after 1 hour
         private const val STALE_THRESHOLD_MS = 60 * 60 * 1000L
     }
 
     private fun isStale(lastUpdated: Long): Boolean {
-        return System.currentTimeMillis() - lastUpdated > STALE_THRESHOLD_MS
+        return clock.now().toEpochMilliseconds() - lastUpdated > STALE_THRESHOLD_MS
     }
 }

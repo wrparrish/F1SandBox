@@ -37,6 +37,9 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
 
+    // Clock abstraction (KMP-ready)
+    api(libs.kotlinx.datetime)
+
     // Lifecycle & ViewModel
     implementation(libs.androidx.lifecycle.runtime.ktx)
 

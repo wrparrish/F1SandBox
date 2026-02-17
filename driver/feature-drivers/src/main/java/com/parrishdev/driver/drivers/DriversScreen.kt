@@ -1,7 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.parrishdev.driver.drivers
 
 import androidx.compose.foundation.Image
-import com.parrishdev.ui.common.singleClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,12 +28,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult.*
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +57,7 @@ import com.parrishdev.ui.GhostGrey
 import com.parrishdev.ui.GoldFirst
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
+import com.parrishdev.ui.common.singleClickable
 
 @Composable
 fun DriversScreen(
@@ -61,6 +66,9 @@ fun DriversScreen(
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewState by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Observe state changes
 
     LaunchedEffect(lifecycleOwner) {
         viewModel.onStartObserving(lifecycleOwner)
@@ -72,7 +80,21 @@ fun DriversScreen(
                 is DriversEvent.NavigateToDriverDetails -> {
                     onNavigateToDetails(event.driverNumber)
                 }
-                is DriversEvent.ShowError -> {}
+
+                is DriversEvent.ShowError -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        withDismissAction = true
+                    )
+                    when (result) {
+                        Dismissed -> {
+
+                        }
+                        ActionPerformed ->  {
+
+                        }
+                    }
+                }
             }
         }
     }
@@ -100,7 +122,10 @@ private fun DriversScreenContent(
             Error(errorMessage = viewState.errorMessage, onRetry = onRetry)
         }
 
-        viewState.showEmptyState -> EmptyState()
+        viewState.showEmptyState -> EmptyState(
+            isRefreshing = viewState.isRefreshing,
+            onRefresh = onRefresh
+        )
 
         else -> {
             PullToRefreshBox(
@@ -286,8 +311,10 @@ private fun DriverHeadshot(
 }
 
 @Composable
-private fun EmptyState() {
-    Box(
+private fun EmptyState(isRefreshing: Boolean, onRefresh: () -> Unit) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
@@ -308,6 +335,7 @@ private fun EmptyState() {
         }
     }
 }
+
 
 @Preview(showBackground = true, backgroundColor = 0xFF0A0A0F)
 @Composable

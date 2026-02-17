@@ -58,7 +58,7 @@ abstract class BaseEventStateViewModel<DS : Any, VS : Any, E : Any>(
 
     /**
      * Channel for events.
-     * Uses CONFLATED to keep only the most recent unhandled event,
+     * Uses BUFFERED to keep only the most recent unhandled event,
      * preventing event buildup if UI is slow to consume.
      */
     private val _eventChannel = Channel<E>(Channel.BUFFERED)
