@@ -2,8 +2,10 @@ package com.parrishdev.race.results
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import com.parrishdev.common.udf.BaseStateViewModel
 import com.parrishdev.common.udf.ViewModelBundle
+import com.parrishdev.race.contracts.RaceResultsScreen
 import com.parrishdev.race.store.RaceStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -22,15 +24,20 @@ class ResultsViewModel @Inject constructor(
     viewModelBundle: ViewModelBundle,
     savedStateHandle: SavedStateHandle
 ) : BaseStateViewModel<ResultsDataState, ResultsViewState>(
-    initialDataState = ResultsDataState(
-        season = savedStateHandle.get<Int>("season") ?: java.time.Year.now().value,
-        round = savedStateHandle.get<Int>("round") ?: 1
-    ),
+    initialDataState = run {
+        val route = savedStateHandle.toRoute<RaceResultsScreen>()
+        ResultsDataState(
+            season = route.season,
+            round = route.round
+        )
+    },
     stateProvider = stateProvider,
     viewModelBundle = viewModelBundle
 ) {
-    private val season: Int = savedStateHandle.get<Int>("season") ?: java.time.Year.now().value
-    private val round: Int = savedStateHandle.get<Int>("round") ?: 1
+    private val route = savedStateHandle.toRoute<RaceResultsScreen>()
+    private val season: Int = route.season
+    private val round: Int = route.round
+
     init {
         // Initial data refresh (non-blocking)
         refreshResults(force = false)

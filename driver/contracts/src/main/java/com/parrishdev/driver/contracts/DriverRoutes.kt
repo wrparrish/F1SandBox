@@ -20,7 +20,7 @@ object DriverGraph
  * Drivers list screen showing all F1 drivers.
  */
 @Serializable
-object DriversListScreen
+object DriversListRoute
 
 /**
  * Driver details screen showing information about a specific driver.
@@ -28,6 +28,6 @@ object DriversListScreen
  * @param driverNumber The unique driver number
  */
 @Serializable
-data class DriverDetailsScreen(
+data class DriverDetailsRoute(
     val driverNumber: Int
 )

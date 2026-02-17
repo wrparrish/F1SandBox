@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     // UDF Framework
     implementation(project(":core:common"))
@@ -62,6 +63,9 @@ dependencies {
 
     // Domain models
     implementation(project(":race:lib-models-race"))
+
+    // Route contracts for type-safe navigation
+    implementation(project(":race:contracts"))
 
     //Fixtures for compose previews
     implementation(project(":race:lib-models-race-fixtures"))

@@ -10,9 +10,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import com.parrishdev.driver.contracts.DriverDetailsScreen
+import com.parrishdev.driver.contracts.DriverDetailsRoute
 import com.parrishdev.driver.contracts.DriverGraph
-import com.parrishdev.driver.contracts.DriversListScreen
+import com.parrishdev.driver.contracts.DriversListRoute
 
 /**
  * Type-safe navigation graph for the Driver domain.
@@ -22,25 +22,25 @@ fun NavGraphBuilder.driverGraph(
     rootNavController: NavHostController
 ) {
     navigation<DriverGraph>(
-        startDestination = DriversListScreen
+        startDestination = DriversListRoute
     ) {
-        composable<DriversListScreen> {
+        composable<DriversListRoute> {
             DriversScreen(
                 onNavigateToDetails = { driverNumber ->
-                    rootNavController.navigate(DriverDetailsScreen(driverNumber))
+                    rootNavController.navigate(DriverDetailsRoute(driverNumber))
                 }
             )
         }
 
-        composable<DriverDetailsScreen> { backStackEntry ->
+        composable<DriverDetailsRoute> { backStackEntry ->
             // Type-safe argument extraction
-            val args = backStackEntry.toRoute<DriverDetailsScreen>()
+            val route = backStackEntry.toRoute<DriverDetailsRoute>()
             // Placeholder for driver details screen
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Driver Details Screen for #${args.driverNumber}")
+                Text("Driver Details Screen for #${route.driverNumber}")
             }
         }
     }

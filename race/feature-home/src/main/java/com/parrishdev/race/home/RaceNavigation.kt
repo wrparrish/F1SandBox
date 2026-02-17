@@ -30,7 +30,7 @@ fun NavGraphBuilder.raceGraph(
 
         composable<RaceResultsScreen> { backStackEntry ->
             // Type-safe argument extraction
-            val args = backStackEntry.toRoute<RaceResultsScreen>()
+            val route = backStackEntry.toRoute<RaceResultsScreen>()
             ResultsScreen()
         }
     }
