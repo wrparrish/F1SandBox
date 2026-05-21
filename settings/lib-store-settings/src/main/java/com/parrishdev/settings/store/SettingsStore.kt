@@ -27,4 +27,46 @@ interface SettingsStore {
      * @param enabled true to enable dark mode, false for light mode
      */
     suspend fun setDarkMode(enabled: Boolean)
+
+    /**
+     * Stream the notifications preference.
+     *
+     * @return Flow emitting true when notifications are enabled
+     */
+    fun streamIsNotificationsEnabled(): Flow<Boolean>
+
+    /**
+     * Persist the notifications preference.
+     *
+     * @param enabled true to enable notifications, false to disable
+     */
+    suspend fun setNotificationsEnabled(enabled: Boolean)
+
+    /**
+     * Stream the advanced options display preference.
+     *
+     * @return Flow emitting true when advanced options should be displayed
+     */
+    fun streamShowAdvancedOptions(): Flow<Boolean>
+
+    /**
+     * Persist the advanced options display preference.
+     *
+     * @param enabled true to show advanced options, false to hide
+     */
+    suspend fun setAdvancedOptions(enabled: Boolean)
+
+    /**
+     * Stream the anonymous data logging preference.
+     *
+     * @return Flow emitting true when data logging is allowed
+     */
+    fun streamIsDataLoggingEnabled(): Flow<Boolean>
+
+    /**
+     * Persist the anonymous data logging preference.
+     *
+     * @param enabled true to allow data logging, false to opt-out
+     */
+    suspend fun setDataLoggingEnabled(enabled: Boolean)
 }
