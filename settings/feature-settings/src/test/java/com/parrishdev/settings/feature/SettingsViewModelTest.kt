@@ -48,11 +48,26 @@ class SettingsViewModelTest {
     }
 
     private val darkModeFlow = MutableStateFlow(true)
+    private val notificationsFlow = MutableStateFlow(true)
+    private val advancedOptionsFlow = MutableStateFlow(false)
+    private val dataLoggingFlow = MutableStateFlow(true)
 
     private val settingsStore = mockk<SettingsStore> {
         every { streamIsDarkMode() } returns darkModeFlow
         coEvery { setDarkMode(any()) } coAnswers {
             darkModeFlow.value = firstArg()
+        }
+        every { streamIsNotificationsEnabled() } returns notificationsFlow
+        coEvery { setNotificationsEnabled(any()) } coAnswers {
+            notificationsFlow.value = firstArg()
+        }
+        every { streamShowAdvancedOptions() } returns advancedOptionsFlow
+        coEvery { setAdvancedOptions(any()) } coAnswers {
+            advancedOptionsFlow.value = firstArg()
+        }
+        every { streamIsDataLoggingEnabled() } returns dataLoggingFlow
+        coEvery { setDataLoggingEnabled(any()) } coAnswers {
+            dataLoggingFlow.value = firstArg()
         }
     }
 
@@ -115,6 +130,17 @@ class SettingsViewModelTest {
 
         val state = stateHolder.latest()
         assertFalse(state.notificationsEnabled)
+    }
+
+    @Test
+    fun `onNotificationsToggled persists to settings store`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationsToggled(false)
+        advanceUntilIdle()
+
+        coVerify { settingsStore.setNotificationsEnabled(false) }
     }
 
     @Test
@@ -209,6 +235,17 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `onAdvancedOptionsToggled persists to settings store`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAdvancedOptionsToggled(true)
+        advanceUntilIdle()
+
+        coVerify { settingsStore.setAdvancedOptions(true) }
+    }
+
+    @Test
     fun `onAdvancedOptionsToggled does NOT emit event`() = runTest {
         viewModel = createViewModel()
 
@@ -251,6 +288,17 @@ class SettingsViewModelTest {
 
         val state = stateHolder.latest()
         assertFalse(state.dataLoggingEnabled)
+    }
+
+    @Test
+    fun `onDataLoggingToggled persists to settings store`() = runTest {
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDataLoggingToggled(false)
+        advanceUntilIdle()
+
+        coVerify { settingsStore.setDataLoggingEnabled(false) }
     }
 
     @Test

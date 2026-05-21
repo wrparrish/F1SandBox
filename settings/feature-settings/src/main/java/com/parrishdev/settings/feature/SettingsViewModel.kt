@@ -44,11 +44,34 @@ class SettingsViewModel @Inject constructor(
         ) { isDarkMode ->
             applyMutation { copy(darkModeEnabled = isDarkMode) }
         }
+
+        observeWithLifecycle(
+            lifecycleOwner = lifecycleOwner,
+            flow = settingsStore.streamIsNotificationsEnabled()
+        ) { isNotificationsEnabled ->
+            applyMutation { copy(notificationsEnabled = isNotificationsEnabled) }
+        }
+
+        observeWithLifecycle(
+            lifecycleOwner = lifecycleOwner,
+            flow = settingsStore.streamShowAdvancedOptions()
+        ) { showAdvancedOptions ->
+            applyMutation { copy(showAdvancedOptions = showAdvancedOptions) }
+        }
+
+        observeWithLifecycle(
+            lifecycleOwner = lifecycleOwner,
+            flow = settingsStore.streamIsDataLoggingEnabled()
+        ) { isDataLoggingEnabled ->
+            applyMutation { copy(dataLoggingEnabled = isDataLoggingEnabled) }
+        }
     }
 
     fun onNotificationsToggled(enabled: Boolean) {
-        applyMutation { copy(notificationsEnabled = enabled) }
-        submitEvent(SettingsEvent.ShowSettingChanged("Notifications", enabled))
+        launchWithErrorHandling {
+            settingsStore.setNotificationsEnabled(enabled)
+            submitEvent(SettingsEvent.ShowSettingChanged("Notifications", enabled))
+        }
     }
 
     fun onDarkModeToggled(enabled: Boolean) {
@@ -58,11 +81,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAdvancedOptionsToggled(enabled: Boolean) {
-        applyMutation { copy(showAdvancedOptions = enabled) }
+        launchWithErrorHandling {
+            settingsStore.setAdvancedOptions(enabled)
+        }
     }
 
     fun onDataLoggingToggled(enabled: Boolean) {
-        applyMutation { copy(dataLoggingEnabled = enabled) }
-        submitEvent(SettingsEvent.ShowSettingChanged("Data Logging", enabled))
+        launchWithErrorHandling {
+            settingsStore.setDataLoggingEnabled(enabled)
+            submitEvent(SettingsEvent.ShowSettingChanged("Data Logging", enabled))
+        }
     }
 }
