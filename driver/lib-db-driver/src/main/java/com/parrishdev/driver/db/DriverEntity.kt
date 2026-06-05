@@ -11,6 +11,7 @@ import androidx.room.PrimaryKey
 data class DriverEntity(
     @PrimaryKey
     val id: String, // Composite: "{season}_{driverNumber}"
+    val season: Int,
     val driverNumber: Int,
     val firstName: String,
     val lastName: String,

@@ -10,7 +10,8 @@ sealed interface DriversEvent {
      * Navigate to driver details screen.
      */
     data class NavigateToDriverDetails(
-        val driverNumber: Int
+        val driverNumber: Int,
+        val season: Int
     ) : DriversEvent
 
     /**

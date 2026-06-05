@@ -42,13 +42,13 @@ class DriverStoreImpl @Inject constructor(
             .map { entities -> entities.map { it.toDomain() } }
     }
 
-    override fun streamDriver(driverNumber: Int): Flow<Driver?> {
-        return driverDao.getDriverByNumber(driverNumber)
+    override fun streamDriver(driverNumber: Int, season: Int): Flow<Driver?> {
+        return driverDao.getDriverByNumber(driverNumber, season)
             .map { entity -> entity?.toDomain() }
     }
 
-    override fun streamAllDrivers(): Flow<List<Driver>> {
-        return driverDao.getAllDrivers()
+    override fun streamDriversForSeason(season: Int): Flow<List<Driver>> {
+        return driverDao.getDriversForSeason(season)
             .map { entities -> entities.map { it.toDomain() } }
     }
 
@@ -66,7 +66,9 @@ class DriverStoreImpl @Inject constructor(
             val driverDtos = driverApi.getDrivers(sessionKey.toString())
 
             // Transform and filter (skip entries without team name)
-            val driverEntities = driverDtos.mapNotNull { it.toEntity() }
+            // Use current year as fallback season for raw sessions
+            val currentYear = java.time.Year.now().value
+            val driverEntities = driverDtos.mapNotNull { it.toEntity(currentYear) }
 
             if (driverEntities.isNotEmpty()) {
                 // Insert into database (Flow will auto-emit)
@@ -75,11 +77,11 @@ class DriverStoreImpl @Inject constructor(
         }
     }
 
-    override suspend fun refreshLatestDrivers(force: Boolean) {
+    override suspend fun refreshLatestDrivers(season: Int, force: Boolean) {
         withContext(dispatcherProvider.io) {
-            // Check staleness using any cached driver's lastUpdated
+            // Check staleness using any cached driver's lastUpdated for this season
             if (!force) {
-                val lastUpdated = driverDao.getLatestUpdateTime()
+                val lastUpdated = driverDao.getLatestUpdateTime(season)
                 if (lastUpdated != null && !isStale(lastUpdated)) {
                     return@withContext
                 }
@@ -92,7 +94,7 @@ class DriverStoreImpl @Inject constructor(
 
             // Fetch standings from Jolpica (has points, position)
             val standingsResult = runCatching {
-                fetchCurrentStandings()
+                fetchStandingsForSeason(season.toString())
             }
 
             val standings = standingsResult.getOrNull()
@@ -102,52 +104,27 @@ class DriverStoreImpl @Inject constructor(
                 if (drivers != null) {
                     // Transform and filter, merging standings data
                     val driverEntities = drivers.mapNotNull { dto ->
-                        dto?.toEntity()?.let { entity ->
+                        dto?.toEntity(season)?.let { entity ->
                             mergeWithStandings(entity, standings)
                         }
                     }
 
                     if (driverEntities.isNotEmpty()) {
-                        // Atomically replace all drivers to ensure current season only
-                        driverDao.replaceAllDrivers(driverEntities)
+                        // Atomically replace all drivers for this season
+                        driverDao.replaceDriversForSeason(season, driverEntities)
                     }
                 } else {
                     // degraded path: standings only, no headshots/colors.
                     val fallbackEntities = standings.mapNotNull { standingEntry ->
                         val standing = standingEntry.value
-                        standing.toEntity(season = SEASON)
+                        standing.toEntity(season = season)
                     }
-                    driverDao.replaceAllDrivers(fallbackEntities)
+                    driverDao.replaceDriversForSeason(season, fallbackEntities)
                 }
             } else {
                 throw standingsResult.exceptionOrNull()
                     ?: IOException("Failed to fetch standings")
             }
-        }
-    }
-
-    /**
-     * Fetches the most recent season standings from Jolpica API.
-     * Tries current year first, falls back to previous year if no data.
-     * Returns a map of driver code (e.g., "VER", "HAM") to their standing data.
-     */
-    private suspend fun fetchCurrentStandings(): Map<String, DriverStandingDto> {
-        return try {
-            val currentSeason = SEASON
-
-            // Try current year first
-            var standings = fetchStandingsForSeason(currentSeason.toString())
-
-            // If no standings for current year, try previous year
-            if (standings.isEmpty()) {
-                Log.d(TAG, "No standings for $currentSeason, trying ${currentSeason - 1}")
-                standings = fetchStandingsForSeason((currentSeason - 1).toString())
-            }
-
-            standings
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to fetch standings, using defaults", e)
-            emptyMap()
         }
     }
 

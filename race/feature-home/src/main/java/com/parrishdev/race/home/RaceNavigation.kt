@@ -15,13 +15,15 @@ import com.parrishdev.race.results.ResultsScreen
  * Uses Navigation Compose 2.8+ typed routes.
  */
 fun NavGraphBuilder.raceGraph(
-    rootNavController: NavHostController
+    rootNavController: NavHostController,
+    selectedSeason: Int
 ) {
     navigation<RaceGraph>(
         startDestination = RaceHomeScreen
     ) {
         composable<RaceHomeScreen> {
             HomeScreen(
+                selectedSeason = selectedSeason,
                 onNavigateToResults = { season, round ->
                     rootNavController.navigate(RaceResultsScreen(season, round))
                 }

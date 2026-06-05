@@ -8,6 +8,8 @@ import com.parrishdev.race.model.Race
 import com.parrishdev.race.store.RaceStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import java.time.Year
 import javax.inject.Inject
 
@@ -31,29 +33,37 @@ class HomeViewModel @Inject constructor(
 ) {
 
     private val currentSeason = Year.now().value - 1
+    private val selectedSeasonFlow = MutableStateFlow(currentSeason)
+
     init {
         // Initial data refresh (non-blocking)
-        refreshRaces(force = false)
+        refreshRaces(season = currentSeason, force = false)
     }
 
     /**
      * Set up lifecycle-aware store observations.
      * Collection automatically stops when UI is in background and restarts when visible.
-     *
-     * This pattern prevents wasted resources from collecting data when the user
-     * can't see the updates (e.g., app minimized, screen off).
      */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override fun onStartObserving(lifecycleOwner: LifecycleOwner) {
         observeWithLifecycle(
             lifecycleOwner = lifecycleOwner,
-            flow = raceStore.streamRacesForSeason(currentSeason)
+            flow = selectedSeasonFlow.flatMapLatest { season ->
+                raceStore.streamRacesForSeason(season)
+            }
         ) { races ->
             applyMutation {
                 copy(races = races)
-                // Note: error is NOT cleared here. Errors represent network failures
-                // and should only be cleared by successful refresh or explicit retry.
             }
         }
+    }
+
+    /**
+     * Called when the active F1 season is changed.
+     */
+    fun onSeasonChanged(season: Int) {
+        selectedSeasonFlow.value = season
+        refreshRaces(season = season, force = false)
     }
 
     /**
@@ -61,7 +71,7 @@ class HomeViewModel @Inject constructor(
      * Called on pull-to-refresh or retry.
      */
     fun onRefresh() {
-        refreshRaces(force = true)
+        refreshRaces(season = selectedSeasonFlow.value, force = true)
     }
 
     /**
@@ -69,7 +79,7 @@ class HomeViewModel @Inject constructor(
      */
     fun onRetry() {
         applyMutation { copy(error = null) }
-        refreshRaces(force = true)
+        refreshRaces(season = selectedSeasonFlow.value, force = true)
     }
 
     /**
@@ -85,11 +95,11 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    private fun refreshRaces(force: Boolean) {
+    private fun refreshRaces(season: Int, force: Boolean) {
         launchWithErrorHandling {
             applyMutation { copy(isRefreshing = force) }
             try {
-                raceStore.refreshRaces(currentSeason, force)
+                raceStore.refreshRaces(season, force)
                 // Clear error on successful refresh
                 applyMutation { copy(error = null) }
             } catch (e: Exception) {

@@ -23,20 +23,21 @@ interface DriverStore {
     fun streamDrivers(sessionKey: Int): Flow<List<Driver>>
 
     /**
-     * Stream a specific driver by their number.
+     * Stream a specific driver by their number and season.
      *
      * @param driverNumber The driver's racing number
+     * @param season The season year
      * @return Flow of driver, or null if not found
      */
-    fun streamDriver(driverNumber: Int): Flow<Driver?>
+    fun streamDriver(driverNumber: Int, season: Int): Flow<Driver?>
 
     /**
-     * Stream all drivers regardless of session.
-     * Useful for offline viewing of cached data.
+     * Stream all drivers for a given season.
      *
-     * @return Flow of all cached drivers
+     * @param season The season year
+     * @return Flow of cached drivers for the season
      */
-    fun streamAllDrivers(): Flow<List<Driver>>
+    fun streamDriversForSeason(season: Int): Flow<List<Driver>>
 
     /**
      * Refresh driver data from the network for a specific session.
@@ -48,11 +49,11 @@ interface DriverStore {
     suspend fun refreshDrivers(sessionKey: Int, force: Boolean = false)
 
     /**
-     * Refresh driver data from the network using the latest session.
-     * Fetches drivers from the most recent F1 session (current/active season).
+     * Refresh driver standings data from the network for a specific season.
      * Data is saved to database; observers will automatically receive updates.
      *
+     * @param season The season year
      * @param force If true, ignores staleness check and always fetches
      */
-    suspend fun refreshLatestDrivers(force: Boolean = false)
+    suspend fun refreshLatestDrivers(season: Int, force: Boolean = false)
 }
