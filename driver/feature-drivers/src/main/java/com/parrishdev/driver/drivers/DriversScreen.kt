@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,22 +52,29 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.parrishdev.driver.model.Driver
+import com.parrishdev.ui.BronzeThird
 import com.parrishdev.ui.F1Red
 import com.parrishdev.ui.F1SandboxTheme
 import com.parrishdev.ui.GhostGrey
 import com.parrishdev.ui.GoldFirst
+import com.parrishdev.ui.SilverSecond
 import com.parrishdev.ui.common.Error
 import com.parrishdev.ui.common.Loading
 import com.parrishdev.ui.common.singleClickable
 
 @Composable
 fun DriversScreen(
-    onNavigateToDetails: (driverNumber: Int) -> Unit,
+    selectedSeason: Int,
+    onNavigateToDetails: (driverNumber: Int, season: Int) -> Unit,
     viewModel: DriversViewModel = hiltViewModel()
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewState by viewModel.stateFlow.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(selectedSeason) {
+        viewModel.onSeasonChanged(selectedSeason)
+    }
 
     // Observe state changes
 
@@ -78,7 +86,7 @@ fun DriversScreen(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 is DriversEvent.NavigateToDriverDetails -> {
-                    onNavigateToDetails(event.driverNumber)
+                    onNavigateToDetails(event.driverNumber, event.season)
                 }
 
                 is DriversEvent.ShowError -> {
@@ -186,14 +194,38 @@ private fun DriverCard(
                     .background(teamColor)
             )
 
+            // Standing Position (on the left)
+            Column(
+                modifier = Modifier
+                    .width(56.dp)
+                    .padding(start = 12.dp, end = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (driver.championshipPosition > 0) driver.championshipPosition.toString() else "-",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = when (driver.championshipPosition) {
+                        1 -> GoldFirst
+                        2 -> SilverSecond
+                        3 -> BronzeThird
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                Text(
+                    text = "POS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GhostGrey
+                )
+            }
+
             // Headshot
             DriverHeadshot(
                 headshotUrl = driver.headshotUrl,
                 contentDescription = "${driver.fullName} headshot",
                 modifier = Modifier
-                    .height(90.dp)
-                    .width(72.dp)
-                    .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                    .height(80.dp)
+                    .width(64.dp)
+                    .padding(vertical = 8.dp)
             )
 
             // Driver info
@@ -202,52 +234,53 @@ private fun DriverCard(
                     .weight(1f)
                     .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = driver.fullName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = driver.fullName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "#${driver.driverNumber}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GhostGrey,
+                    )
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = driver.teamName,
                     style = MaterialTheme.typography.bodySmall,
                     color = teamColor,
                 )
-                if (driver.championshipPosition > 0) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "P${driver.championshipPosition}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (driver.championshipPosition <= 3) GoldFirst
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            text = "${driver.championshipPoints.toInt()} PTS",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = GhostGrey,
-                        )
-                        if (driver.wins > 0) {
-                            Text(
-                                text = "${driver.wins}W",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = GhostGrey,
-                            )
-                        }
-                    }
+                if (driver.wins > 0) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (driver.wins == 1) "1 win" else "${driver.wins} wins",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GhostGrey,
+                    )
                 }
             }
 
-            // Driver number
-            Text(
-                text = driver.driverNumber.toString(),
-                style = MaterialTheme.typography.headlineLarge,
-                color = teamColor.copy(alpha = 0.6f),
-                modifier = Modifier.padding(end = 16.dp)
-            )
+            // Points (on the right)
+            Column(
+                modifier = Modifier.padding(end = 16.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = driver.championshipPoints.toInt().toString(),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "PTS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GhostGrey
+                )
+            }
         }
     }
 }

@@ -26,8 +26,10 @@ object DriversListRoute
  * Driver details screen showing information about a specific driver.
  *
  * @param driverNumber The unique driver number
+ * @param season The F1 season year
  */
 @Serializable
 data class DriverDetailsRoute(
-    val driverNumber: Int
+    val driverNumber: Int,
+    val season: Int
 )

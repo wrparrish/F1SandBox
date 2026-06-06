@@ -13,6 +13,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -25,6 +26,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.Year
+import androidx.navigation.toRoute
+import com.parrishdev.race.contracts.RaceResultsScreen
 
 /**
  * Unit tests for [ResultsViewModel].
@@ -63,6 +66,18 @@ class ResultsViewModelTest {
     @Before
     fun setup() {
         stateHolder.clear()
+        mockkStatic("androidx.navigation.SavedStateHandleKt")
+        every {
+            any<SavedStateHandle>().toRoute<RaceResultsScreen>(
+                eq(RaceResultsScreen::class),
+                any()
+            )
+        } answers {
+            val handle = firstArg<SavedStateHandle>()
+            val season = handle.get<Int>("season") ?: java.time.Year.now().value
+            val round = handle.get<Int>("round") ?: 1
+            RaceResultsScreen(season = season, round = round)
+        }
         coEvery { raceStore.streamRaceWithResults(any(), any()) } returns raceWithResultsFlow
     }
 

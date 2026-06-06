@@ -61,7 +61,7 @@ class DriversViewModelTest {
     @Before
     fun setup() {
         stateHolder.clear()
-        coEvery { driverStore.streamAllDrivers() } returns driversFlow
+        coEvery { driverStore.streamDriversForSeason(any()) } returns driversFlow
     }
 
     private fun createViewModel(): DriversViewModel {
@@ -89,11 +89,11 @@ class DriversViewModelTest {
     }
 
     @Test
-    fun `init triggers refresh latest drivers call with force true`() = runTest {
+    fun `init triggers refresh latest drivers call with force false`() = runTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        coVerify { driverStore.refreshLatestDrivers(force = true) }
+        coVerify { driverStore.refreshLatestDrivers(any(), force = false) }
     }
 
     @Test
@@ -181,8 +181,9 @@ class DriversViewModelTest {
         viewModel.onRefresh()
         advanceUntilIdle()
 
-        // Called once in init, once in onRefresh
-        coVerify(exactly = 2) { driverStore.refreshLatestDrivers(force = true) }
+        // Called once in init (force = false), once in onRefresh (force = true)
+        coVerify(exactly = 1) { driverStore.refreshLatestDrivers(any(), force = false) }
+        coVerify(exactly = 1) { driverStore.refreshLatestDrivers(any(), force = true) }
     }
 
     // endregion
@@ -192,7 +193,7 @@ class DriversViewModelTest {
     @Test
     fun `refresh error sets error state`() = runTest {
         val errorMessage = "Network error"
-        coEvery { driverStore.refreshLatestDrivers(any()) } throws RuntimeException(errorMessage)
+        coEvery { driverStore.refreshLatestDrivers(any(), any()) } throws RuntimeException(errorMessage)
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -205,7 +206,7 @@ class DriversViewModelTest {
     @Test
     fun `refresh error emits ShowError event`() = runTest {
         val errorMessage = "Network error"
-        coEvery { driverStore.refreshLatestDrivers(any()) } throws RuntimeException(errorMessage)
+        coEvery { driverStore.refreshLatestDrivers(any(), any()) } throws RuntimeException(errorMessage)
 
         viewModel = createViewModel()
 
@@ -221,13 +222,13 @@ class DriversViewModelTest {
     @Test
     fun `onRetry clears error and triggers refresh`() = runTest {
         val errorMessage = "Network error"
-        coEvery { driverStore.refreshLatestDrivers(any()) } throws RuntimeException(errorMessage)
+        coEvery { driverStore.refreshLatestDrivers(any(), any()) } throws RuntimeException(errorMessage)
 
         viewModel = createViewModel()
         advanceUntilIdle()
 
         // Reset mock to succeed on retry
-        coEvery { driverStore.refreshLatestDrivers(any()) } returns Unit
+        coEvery { driverStore.refreshLatestDrivers(any(), any()) } returns Unit
         stateHolder.clear()
 
         viewModel.onRetry()
@@ -240,7 +241,7 @@ class DriversViewModelTest {
 
     @Test
     fun `error with null message uses default message`() = runTest {
-        coEvery { driverStore.refreshLatestDrivers(any()) } throws RuntimeException(null as String?)
+        coEvery { driverStore.refreshLatestDrivers(any(), any()) } throws RuntimeException(null as String?)
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -265,6 +266,7 @@ class DriversViewModelTest {
             val event = awaitItem()
             assertTrue(event is DriversEvent.NavigateToDriverDetails)
             assertEquals(4, (event as DriversEvent.NavigateToDriverDetails).driverNumber)
+            assertEquals(2025, (event as DriversEvent.NavigateToDriverDetails).season)
         }
     }
 
@@ -277,10 +279,14 @@ class DriversViewModelTest {
 
         viewModel.eventFlow.test {
             viewModel.onDriverSelected(verstappen)
-            assertEquals(1, (awaitItem() as DriversEvent.NavigateToDriverDetails).driverNumber)
+            val event1 = awaitItem() as DriversEvent.NavigateToDriverDetails
+            assertEquals(1, event1.driverNumber)
+            assertEquals(2025, event1.season)
 
             viewModel.onDriverSelected(norris)
-            assertEquals(4, (awaitItem() as DriversEvent.NavigateToDriverDetails).driverNumber)
+            val event2 = awaitItem() as DriversEvent.NavigateToDriverDetails
+            assertEquals(4, event2.driverNumber)
+            assertEquals(2025, event2.season)
         }
     }
 

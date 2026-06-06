@@ -46,11 +46,16 @@ import com.parrishdev.ui.common.Loading
 
 @Composable
 fun HomeScreen(
+    selectedSeason: Int,
     onNavigateToResults: (season: Int, round: Int) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val viewState by viewModel.stateFlow.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedSeason) {
+        viewModel.onSeasonChanged(selectedSeason)
+    }
 
     LaunchedEffect(lifecycleOwner) {
         viewModel.onStartObserving(lifecycleOwner)

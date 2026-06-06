@@ -12,13 +12,14 @@ import com.parrishdev.driver.model.Driver
  * Convert API DTO to database entity.
  * Returns null if required fields are missing.
  */
-fun DriverDto.toEntity(): DriverEntity? {
+fun DriverDto.toEntity(season: Int): DriverEntity? {
     val number = driverNumber ?: return null
     val session = sessionKey ?: return null
     val team = teamName ?: return null
 
     return DriverEntity(
-        id = DriverEntity.createId(session, number),
+        id = DriverEntity.createId(season, number),
+        season = season,
         driverNumber = number,
         firstName = firstName ?: "",
         lastName = lastName ?: "",
@@ -44,6 +45,7 @@ fun DriverStandingDto.toEntity(season: Int): DriverEntity? {
 
     return DriverEntity(
         id = DriverEntity.createId(season, number),
+        season = season,
         driverNumber = number,
         firstName = standingDriver.givenName,
         lastName = standingDriver.familyName,

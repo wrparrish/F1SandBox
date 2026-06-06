@@ -9,6 +9,7 @@ import com.parrishdev.driver.model.Driver
  * Nullable properties indicate loading state (null = loading).
  */
 data class DriversDataState(
+    val season: Int = 2025,
     val drivers: List<Driver>? = null,
     val isRefreshing: Boolean = false,
     val error: String? = null

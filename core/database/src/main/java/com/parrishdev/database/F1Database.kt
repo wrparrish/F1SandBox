@@ -23,7 +23,7 @@ import com.parrishdev.race.db.RaceResultEntity
         RaceResultEntity::class,
         DriverEntity::class,
     ],
-    version = 4,  // Bumped to add championship standings columns to drivers
+    version = 5,  // Bumped to add season column to drivers
     exportSchema = false
 )
 abstract class F1Database : RoomDatabase() {

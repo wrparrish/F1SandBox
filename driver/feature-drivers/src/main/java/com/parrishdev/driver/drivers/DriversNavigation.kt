@@ -19,29 +19,27 @@ import com.parrishdev.driver.contracts.DriversListRoute
  * Uses Navigation Compose 2.8+ typed routes.
  */
 fun NavGraphBuilder.driverGraph(
-    rootNavController: NavHostController
+    rootNavController: NavHostController,
+    selectedSeason: Int
 ) {
     navigation<DriverGraph>(
         startDestination = DriversListRoute
     ) {
         composable<DriversListRoute> {
             DriversScreen(
-                onNavigateToDetails = { driverNumber ->
-                    rootNavController.navigate(DriverDetailsRoute(driverNumber))
+                selectedSeason = selectedSeason,
+                onNavigateToDetails = { driverNumber, season ->
+                    rootNavController.navigate(DriverDetailsRoute(driverNumber = driverNumber, season = season))
                 }
             )
         }
 
-        composable<DriverDetailsRoute> { backStackEntry ->
-            // Type-safe argument extraction
-            val route = backStackEntry.toRoute<DriverDetailsRoute>()
-            // Placeholder for driver details screen
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Driver Details Screen for #${route.driverNumber}")
-            }
+        composable<DriverDetailsRoute> {
+            DriverDetailScreen(
+                onBackClick = {
+                    rootNavController.popBackStack()
+                }
+            )
         }
     }
 }

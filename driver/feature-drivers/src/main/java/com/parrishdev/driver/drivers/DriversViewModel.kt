@@ -6,6 +6,8 @@ import com.parrishdev.common.udf.ViewModelBundle
 import com.parrishdev.driver.model.Driver
 import com.parrishdev.driver.store.DriverStore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -27,19 +29,23 @@ class DriversViewModel @Inject constructor(
     stateProvider = stateProvider,
     viewModelBundle = viewModelBundle
 ) {
+    private val selectedSeasonFlow = MutableStateFlow(2025)
+
     init {
-        refreshDrivers(force = false)
+        refreshDrivers(season = 2025, force = false)
     }
 
     /**
      * Set up lifecycle-aware store observations.
      * Collection automatically stops when UI is in background and restarts when visible.
      */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     override fun onStartObserving(lifecycleOwner: LifecycleOwner) {
         observeWithLifecycle(
             lifecycleOwner = lifecycleOwner,
-            flow = driverStore.streamAllDrivers()
-                .map { drivers -> drivers.sortedByDescending { it.championshipPoints } }
+            flow = selectedSeasonFlow.flatMapLatest { season ->
+                driverStore.streamDriversForSeason(season)
+            }.map { drivers -> drivers.sortedByDescending { it.championshipPoints } }
         ) { drivers ->
             applyMutation {
                 copy(drivers = drivers)
@@ -50,11 +56,20 @@ class DriversViewModel @Inject constructor(
     }
 
     /**
+     * Called when the active F1 season is changed.
+     */
+    fun onSeasonChanged(season: Int) {
+        selectedSeasonFlow.value = season
+        applyMutation { copy(season = season) }
+        refreshDrivers(season = season, force = false)
+    }
+
+    /**
      * Refresh driver data from the network.
      * Called on pull-to-refresh or retry.
      */
     fun onRefresh() {
-        refreshDrivers(force = true)
+        refreshDrivers(season = selectedSeasonFlow.value, force = true)
     }
 
     /**
@@ -62,7 +77,7 @@ class DriversViewModel @Inject constructor(
      */
     fun onRetry() {
         applyMutation { copy(error = null) }
-        refreshDrivers(force = true)
+        refreshDrivers(season = selectedSeasonFlow.value, force = true)
     }
 
     /**
@@ -71,16 +86,17 @@ class DriversViewModel @Inject constructor(
     fun onDriverSelected(driver: Driver) {
         submitEvent(
             DriversEvent.NavigateToDriverDetails(
-                driverNumber = driver.driverNumber
+                driverNumber = driver.driverNumber,
+                season = selectedSeasonFlow.value
             )
         )
     }
 
-    private fun refreshDrivers(force: Boolean) {
+    private fun refreshDrivers(season: Int, force: Boolean) {
         launchWithErrorHandling {
             applyMutation { copy(isRefreshing = force) }
             try {
-                driverStore.refreshLatestDrivers(force = force)
+                driverStore.refreshLatestDrivers(season = season, force = force)
                 // Clear error on successful refresh
                 applyMutation { copy(error = null) }
             } catch (e: Exception) {
